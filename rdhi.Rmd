@@ -1,0 +1,275 @@
+---
+title: "Creating the ``r params$package_name`` R package"
+author: "STAT585"
+date: "03-30-2023"
+knit: litr::render
+output: litr::litr_html_document
+params:
+  package_name: "RDHI" # <-- change this to your package name
+  package_parent_dir: "." # <-- relative to this file's location
+---
+
+
+## Package setup
+
+We start by specifying the information needed in the DESCRIPTION file of the R package.
+
+```{r package-setup, message=FALSE, results='hide'}
+usethis::create_package(
+  path = ".",
+  fields = list(
+    Package = params$package_name,
+    Version = "1.0",
+    Title = "Prediction Interval",
+    Description = "This package contains different methods to create the prediction interval for different data set.",
+    Imports = "lava, purrr, magrittr, stats"
+  )
+)
+usethis::use_mit_license(copyright_holder = "F. Last")
+```
+
+
+```{r}
+#' Calculate the upper quantile for data with weights
+#' 
+#' @param v the data that we want to find quantile
+#' @param prob find the upper 100*prob% quantile
+#' @param w weight for data
+#' @param sorted whether v has been sorted
+#' 
+#' @export
+upper.quantile <- function(v, prob, w=NULL, sorted=FALSE) {
+  if (is.null(w)) w = rep(1,length(v))
+  if (!sorted) { o = order(v); v = v[o]; w = w[o] }
+  i = which(cumsum(w/sum(w)) >= prob)
+  if (length(i)==0) return(Inf)
+  else return(v[min(i)])
+}
+```
+
+```{r}
+#' Calculate the lower quantile for data with weights
+#' 
+#' @param v the data that we want to find quantile
+#' @param prob find the lower 100*prob% quantile
+#' @param w weight for data
+#' @param sorted whether v has been sorted
+#' 
+#' @export
+lower.quantile <- function(v, prob, w=NULL, sorted=FALSE) {
+  if (is.null(w)) w = rep(1,length(v))
+  if (!sorted) { o = order(v); v = v[o]; w = w[o] }
+  i = which(cumsum(w/sum(w)) <= prob)
+  if (length(i)==0) return(-Inf)
+  else return(v[max(i)])
+}
+```
+
+```{r}
+#' Calculate shortest prediction interval  
+#' 
+#' @param x data
+#' @param alpha nominal error rate
+#' @param beta a random position. beta must be less than or equal to alpha.
+#' @export
+random.pi <- function(x, alpha, beta){
+  if(is.null(beta)) beta = alpha
+  if(beta > alpha) stop("Invalid beta!")
+  lower_q = lower.quantile(c(x, Inf), prob = beta, w = rep(1, length(x)+1), sorted = FALSE)
+  upper_q = upper.quantile(c(x, Inf), prob = beta + (1 - alpha), w = rep(1, length(x)+1), sorted = FALSE)
+  PI = c(lower_q, upper_q)
+  return(PI)
+}
+```
+
+```{r}
+#' Calculate shortest prediction interval  
+#' 
+#' @param x data
+#' @param alpha nominal error rate
+#' 
+#' @export
+shortest.pi <- function(x, alpha){
+  alpha_iter = seq(alpha/50, alpha, alpha/50)
+  j <- 1
+  prev_length = Inf
+  find_finite  = 0
+  #Find the quantiles producing the shortest 1-alpha interval
+  while(j < length(alpha_iter)){
+    lower_q = lower.quantile(c(x, Inf), prob = alpha_iter[j], w = rep(1, length(x)+1), sorted = FALSE)
+    upper_q = upper.quantile(c(x, Inf), prob = alpha_iter[j] + (1 - alpha), w = rep(1, length(x)+1), sorted = FALSE)
+    if((upper_q-lower_q) < prev_length){
+      find_finite = 1
+      shortest_lower_q = lower_q
+      shortest_upper_q = upper_q
+      prev_length = upper_q-lower_q
+    }
+    j = j+1
+  }
+  if(find_finite){
+    PI = c(shortest_lower_q, shortest_upper_q)
+  }else {
+    stop("No finite interval at given coverage rate")
+  }
+  return(PI)
+}
+```
+
+```{r}
+#' Cross validation for the boost of shortest prediction interval  
+#' 
+#' @param x data
+#' @param alpha nominal error rate
+#' @param K fold
+#' @importFrom lava foldr
+#' 
+#' @export
+cv.pi <- function(x, alpha, K = 2){
+  n = length(x)
+  t.iter = seq(0, min(1.12*sqrt(alpha/n), alpha - 4/n), 
+               by = min(1.12*sqrt(alpha/n), alpha - 4/n)/10)
+  folds = foldr(n, K, rep=1)
+  pre.cov = 0
+  best.rate = t.iter[1]
+  for(j in 1:length(t.iter)){
+    nominal.rate = alpha - t.iter[j]
+    for(k in 1:K){
+      fold = as.vector(folds[[1]][[k]])
+      xtest = x[fold]
+      xtrain  = x[-fold]
+      PI = shortest.pi(xtrain, nominal.rate)
+      cov.k = sum(PI[1]<= xtest & PI[2] >=xtest)
+    }
+    cov.k  = cov.k/n
+    if(abs(cov.k-1+alpha)< abs(pre.cov-1+alpha)){# more accurate
+      best.rate = t.iter[j]
+      pre.cov = cov.k
+    }
+  }
+  PI = shortest.pi(x, alpha-best.rate)
+  return(PI)
+}
+```
+
+```{r}
+#' Approximate data driven prediction interval  
+#' 
+#' @param x data
+#' @param alpha nominal error rate
+#' @importFrom purrr map_df
+#' @importFrom magrittr "%>%"
+#' @export
+data.driven.pi <- function(x, alpha){
+  n = length(x)
+  k = ceiling(n*(1-alpha) + 1.12*sqrt(n*alpha))
+  ordered_data = sort(x)
+  posi = 1:(n-k)
+  res = posi %>% map_df(.f = function(low_posi){
+    up_posi = low_posi + k
+    interval_length = ordered_data[up_posi] - ordered_data[low_posi]
+    return(data.frame(low = ordered_data[low_posi], 
+                      up = ordered_data[up_posi], 
+                      length = interval_length))
+  })
+  unlist(unname(res[which.min(res$length), c('low', 'up')]))
+}
+```
+
+```{r}
+#' Get the prediction interval using a simulated data set
+#' 
+#' Get the prediction interval by a chosen method using a simulated data set. The simulated data are generated from standard Normal distribution, standard Uniform distribution, standard Exponential distribution or standard Gamma distribution unless more parameters for the distribution are specified. 
+#' 
+#' @importFrom stats rexp
+#' @importFrom stats rnorm
+#' @importFrom stats runif
+#' @importFrom stats rgamma
+#' @param METHOD a character string or a number giving the method to be used. This must match one of "Random Position", "Shortest", "Cross Validation" or "Data Driven", with default "Shortest". 1, 2, 3, 4 refer to  "Random Position", "Shortest", "Cross Validation" and "Data Driven" respectively.
+#' @param DIST distribution that the simulated data from. This must match one of "Normal", "Uniform", "Exponential", "Gamma", with default "Normal".
+#' @param n Number of observations for the simulated data
+#' @param test_n Number of observations for the test data
+#' @param alpha nominal error rate
+#' @param test_data whether generate the test data
+#' @param K k-fold cross-validation. Only neeed when METHOD is "Cross Validation", with default 2.
+#' @param beta a random position. Only needed when METHOD is "Random Position". beta must be less than or equal to alpha.
+#' @param ... arguments passed to or from distributions
+#' @returns A list.
+#' \item{interval}{prediction interval}
+#' \item{data}{simulated data}
+#' \item{test_dataset}{test data}
+#' @export
+get.interval <- function(METHOD = "Shortest", DIST = "Normal", 
+                         n = 100, test_n = 100, alpha = 0.05, test_data = F,
+                         K = 2, beta, ...){
+  if(length(list(...)) == 0){
+    if(DIST == "Normal"){
+      data = rnorm(n, mean = 0, sd = 1)
+      if(test_data) reference_data = rnorm(test_n, mean = 0, sd = 1)
+    }else if(DIST == "Uniform"){
+      data = runif(n, min = 0, max = 1)
+      if(test_data) reference_data = runif(test_n, min = 0, max = 1)
+    }else if(DIST == "Exponential"){
+      data = rexp(n, rate = 1)
+      if(test_data) reference_data = rexp(test_n, rate = 1)
+    }else if(DIST == "Gamma"){
+      data = rgamma(n, rate = 1)
+      if(test_data) reference_data = rgamma(test_n, rate = 1)
+    }else{
+      stop("DIST is invalid!")
+    }
+  }else{
+    if(DIST == "Normal"){
+      data = rnorm(n, ...)
+      if(test_data) reference_data = rnorm(test_n, ...)
+    }else if(DIST == "Uniform"){
+      data = runif(n, ...)
+      if(test_data) reference_data = runif(test_n, ...)
+    }else if(DIST == "Exponential"){
+      data = rexp(n, ...)
+      if(test_data) reference_data = rexp(test_n, ...)
+    }else if(DIST == "Gamma"){
+      data = rgamma(n, ...)
+      if(test_data) reference_data = rgamma(test_n, ...)
+    }else{
+      stop("DIST is invalid!")
+    }
+  }
+  
+  methods = 1:4
+  names(methods) = c("Random Position", "Shortest", 
+                     "Cross Validation", "Data Driven")
+  
+  METHOD = ifelse(is.character(METHOD), methods[METHOD], METHOD)
+  
+  if(METHOD == 1){
+      interval = random.pi(data, alpha, beta)
+    }else if(METHOD == 2){
+      interval = shortest.pi(data, alpha)
+    }else if(METHOD == 3){
+      interval = cv.pi(data, alpha, K)
+    }else if(METHOD == 4){
+      interval = data.driven.pi(data, alpha)
+    }else{
+      stop("METHOD is invalid!")
+    }
+  
+  if(test_data){
+    return(list(interval = interval, data = data, test_dataset = reference_data))
+  }else{
+    return(list(interval = interval, data = data))
+  }
+}
+```
+
+
+## Documenting the package and building
+
+We finish by running commands that will document, build, and install the package.  It may also be a good idea to check the package from within this file.
+
+```{r}
+litr::document() # <-- use instead of devtools::document()
+# devtools::build()
+# devtools::install()
+# devtools::check(document = FALSE)
+```
+

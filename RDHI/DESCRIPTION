@@ -1,0 +1,19 @@
+Package: RDHI
+Title: Prediction Interval
+Version: 1.0
+Authors@R: 
+    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"),
+           comment = c(ORCID = "YOUR-ORCID-ID"))
+Description: This package contains different methods to create the
+    prediction interval for different data set.
+License: MIT + file LICENSE
+Imports: 
+    lava,
+    magrittr,
+    purrr,
+    stats
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.3
+LitrVersionUsed: 0.7.0
+LitrId: 55e016dd577afe7b77946af2b9124574

@@ -1,7 +1,7 @@
 ---
-title: "Shortest"
-author: "Yingchao Zhou"
-date: '2022-05-23'
+title: "Prediction Interval"
+author: "Project"
+date: '2023-03-30'
 output: pdf_document
 ---
 
@@ -9,110 +9,98 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r}
-library(lava)
-
-#' Calculate the upper quantile for data with weights
-#' 
-#' @param v the data that we want to find quantile
-#' @param prob find the upper 100*prob% quantile
-#' @param w weight for data
-#' @param sorted whether v has been sorted
-#' 
-#' @export
-upper.quantile = function(v, prob, w=NULL, sorted=FALSE) {
-  if (is.null(w)) w = rep(1,length(v))
-  if (!sorted) { o = order(v); v = v[o]; w = w[o] }
-  i = which(cumsum(w/sum(w)) >= prob)
-  if (length(i)==0) return(Inf)
-  else return(v[min(i)])
-}
-
-#' Calculate the lower quantile for data with weights
-#' 
-#' @param v the data that we want to find quantile
-#' @param prob find the lower 100*prob% quantile
-#' @param w weight for data
-#' @param sorted whether v has been sorted
-#' 
-#' @export
-lower.quantile = function(v, prob, w=NULL, sorted=FALSE) {
-  if (is.null(w)) w = rep(1,length(v))
-  if (!sorted) { o = order(v); v = v[o]; w = w[o] }
-  i = which(cumsum(w/sum(w)) <= prob)
-  if (length(i)==0) return(-Inf)
-  else return(v[max(i)])
-}
-
-#' Calculate shortest prediction interval  
-#' 
-#' @param x data
-#' @param alpha nominal error rate
-#' 
-#' @export
-shortest.pi = function(x, alpha){
-  alpha_iter = seq(alpha/50, alpha, alpha/50)
-  j <- 1
-  prev_length = Inf
-  find_finite  = 0
-  #Find the quantiles producing the shortest 1-alpha interval
-  while(j < length(alpha_iter)){
-    lower_q = lower.quantile(c(x, Inf), prob = alpha_iter[j], w = rep(1, length(x)+1), sorted = FALSE)
-    upper_q = upper.quantile(c(x, Inf), prob = alpha_iter[j] + (1 - alpha), w = rep(1, length(x)+1), sorted = FALSE)
-    if((upper_q-lower_q) < prev_length){
-      find_finite = 1
-      shortest_lower_q = lower_q
-      shortest_upper_q = upper_q
-      prev_length = upper_q-lower_q
-    }
-    j = j+1
-  }
-  if(find_finite){
-    PI = c(shortest_lower_q, shortest_upper_q)
-  }else {
-    stop("No finite interval at given coverage rate")
-  }
-  return(PI)
-}
-
-#' Cross validation for the boost of shortest prediction interval  
-#' 
-#' @param x data
-#' @param alpha nominal error rate
-#' @param K fold
-#' @importFrom lava foldr
-#' 
-#' @export
-cv.pi = function(x, alpha, K = 2){
-  n = length(x)
-  t.iter = seq(0, min(1.12*sqrt(alpha/n), alpha - 4/n), 
-               by = min(1.12*sqrt(alpha/n), alpha - 4/n)/10)
-  folds = foldr(n, K, rep=1)
-  pre.cov = 0
-  best.rate = t.iter[1]
-  for(j in 1:length(t.iter)){
-    nominal.rate = alpha - t.iter[j]
-    cov.k = 0
-    for(k in 1:K){
-      fold = as.vector(folds[[1]][[k]])
-      xtest = x[fold]
-      xtrain  = x[-fold]
-      PI = shortest.pi(xtrain, nominal.rate)
-      cov.k = cov.k + sum(PI[1]<= xtest & PI[2] >=xtest)
-    }
-    cov.k  = cov.k/n
-    if(abs(cov.k-1+alpha)< abs(pre.cov-1+alpha)){# more accurate
-      best.rate = t.iter[j]
-      pre.cov = cov.k
-    }
-  }
-  PI = shortest.pi(x, alpha-best.rate)
-  return(PI)
-}
-
+<!-- Install Package -->
+```{r, include=FALSE, eval=FALSE}
+devtools::install("RDHI")
+.rs.restartR()
 ```
 
-Shortest prediction interval: See the Data-driven nonparametric prediction intervals.pdf. For a skewed distribution, the equal-tailed prediction interval is usually not the shortest. For given miscoverage rate $\alpha$, a natural idea is to search among the intervals with left tail $\beta$ and right tail $\alpha-\beta$, where $\beta\in(0, \alpha)$. However, this search results in undercoverage.  
+
+```{r, include=FALSE}
+library(RDHI)
+```
+
+## Method
+We introduce four methods to generate the prediction interval. 
+
+Let $X_1, . . . ,X_n$ be a simple random sample from a distribution with continuous cumulative distribution function $F$. For a given nominal error rate $\alpha$, a $100((1-\alpha)\%$ prediction interval for an independent future observation $X_{n+1}$ from the same distribution is a random interval $(L(X), U(X))$ such that
+
+$$\text{inf}_{F\in\mathcal{F}}P(L(X)<X_{n+1}<U(X))\geq 1-\alpha$$
+where $\mathcal{F}$ is the set of distributions under consideration, $L(X)$ is the lower bound of the interval and $U(X)$ is the upper bound of the interval.
+
+We would like to use different methods to find $(L(X), U(X))$.
+
+### Prediction interval with the choosen position
+
+If we choose a random $\beta$, we can find the left tail $x_1$ from the random sample such that $P(X<x_1) \leq\beta$ and right tail is $x_2$ from the random sample such that $P(X<x_2) \geq\beta+(1-\alpha)$. 
+
+### Shortest prediction interval
+
+Find the shortest intervals $(x_1, x_2)$ such that such that $P(X<x_1) \leq\beta$ and right tail is $x_2$ from the random sample such that $P(X<x_2) \geq\beta+(1-\alpha)$, where $\beta\in(0, \alpha)$. 
+
+### Prediction interval using cross validation
+
+In k-fold cross-validation, the original sample is randomly partitioned into $k$ equal sized subsamples. Of the $k$ subsamples, a single subsample is retained as the validation data for testing the model, and the remaining $k-1$ subsamples are used as training data. Find the shortest prediction interval with a coverage probability at least $100(1-\alpha)\%$ using training data set and evaluate its performance on the testing data set. The chosen prediction interval is the one having a more accurate coverage probability on the testing data set.
+
+### Data Driven Prediction interval
+
+The data driven prediction interval is obtained by choosing the shortest of the intervals $(X_{(r)}, X_{(s)})$ for $r = 1, . . . ,n-k$, where $k = n(1-\alpha) + 1.12\sqrt{n\alpha}$. For $n\alpha$ large, this interval gives exact confidence coefficient $1-\alpha$.
+
+## Performance evaluated using simulated data
+
+### Getting the prediction interval for one simulated data set
+
+```{r}
+# more details in ?get.interval
+# Example: generate the samples from standard normal distribution
+# use cross validation method to get the prediction interval using the generated sample
+res = get.interval(METHOD = 3, DIST = "Normal", n = 1000)
+
+# things needed for the plot below
+lower_q = res$interval[1]
+upper_q = res$interval[2]
+data = res$data
+# A histogram of the sample with a shaded area representing the range of the prediction interval
+# inputs: sample data, lower bound of the prediction interval, upper bound of the prediction interval 
+# output: a plot
+h = hist(data, breaks=50, plot=FALSE)
+cuts = cut(h$breaks, c(lower_q, upper_q))
+plot(h$breaks, c(h$counts,0) ,type="s",col="black", lwd=2)
+plot(h, col="gray"[cuts], lty="blank", add=T)
+```
+
+### Comparison of the coverage 
+
+We conduct 100 experiments. For each experiment, we get the prediction interval using simulated data and get the coverage probability of the the prediction interval on the test data generated from the same distribution as the simulated data. The boxplot of 100 coverage probabilities is shown.
+
+#### Prediction interval with random positions
+
+In each experiment, we use a random chosen position. It's not going to be the shortest, but it's valid in coverage.
+
+```{r}
+n = 1000 ## training sample size
+n0 = 1000 ## test sample size
+alpha = 0.05 ## nonimal error rate
+n_exp = 100 # number of experiments
+cov.box = vector(mode="double", length=n_exp)
+for(i in 1:n_exp){
+  beta = runif(1, min = 0, max = alpha)
+  
+  res = get.interval(METHOD = 1, DIST = "Normal", n = n, test_n = n0, beta = beta, test_data = T)
+  x = res$data
+  x0 = res$test_dataset
+  lower_q = res$interval[1]
+  upper_q = res$interval[2]
+  
+  coverage.x0 = 1-mean(lower_q<= x0 & upper_q >=x0)
+  cov.box[i] = coverage.x0
+}
+
+boxplot(cov.box, main = paste(expression(alpha), '=', alpha, 'n=', n))
+abline(h = alpha, col = 'red')
+```
+
+#### Shortest prediction interval
 
 With no correction on the nominal error rate, the prediction interval is going to undercover:
 
@@ -120,119 +108,72 @@ With no correction on the nominal error rate, the prediction interval is going t
 n = 1000 ## training sample size
 n0 = 1000 ## test sample size
 alpha = 0.05 ## nonimal error rate
-alpha_iter = seq(alpha/50, alpha, alpha/50) ## the left tails we will search
-cov.box = c()
-
-for(i in 1:100){
-  x = rnorm(n, 0, 1)  ## training data
-  x0 = rnorm(n0, 0, 1) ## test data
-  
-  j <- 1
-  prev_length = Inf
-  #Find the quantiles producing the shortest 1-alpha interval
-  while(alpha_iter[j]<alpha){
-    lower_q = lower.quantile(c(x, Inf), prob = alpha_iter[j], w = rep(1, length(x)+1), sorted = FALSE)
-    upper_q = upper.quantile(c(x, Inf), prob = alpha_iter[j] + (1 - alpha), w = rep(1, length(x)+1), sorted = FALSE)
-    if((upper_q-lower_q) < prev_length){
-      shortest_lower_q = lower_q
-      shortest_upper_q = upper_q
-      prev_length = upper_q-lower_q
-    }
-    j = j+1
-  }
-  
+n_exp = 100 # number of experiments
+cov.box = vector(mode="double", length=n_exp)
+for(i in 1:n_exp){
+  res = get.interval(METHOD = 2, DIST = "Normal", n = n, test_n = n0, test_data = T)
+  x = res$data
+  x0 = res$test_dataset
+  shortest_lower_q = res$interval[1]
+  shortest_upper_q = res$interval[2]
   coverage.x0 = 1-mean(shortest_lower_q<= x0 & shortest_upper_q >=x0)
-  cov.box = c(cov.box, coverage.x0)
+  cov.box[i] = coverage.x0
 }
 
 boxplot(cov.box, main = paste(expression(alpha), '=', alpha, 'n=', n))
-lines(x = 0:5, y = rep(alpha,6), col = 'red')
-lines(x = 0:5, y = rep(mean(cov.box),6), col = 'blue')
-
+abline(h = alpha, col = 'red')
 
 ```
 
-Illustrate the dependence on "searching for the shortest interval" and "undercover": if we choose a interval position at random, it's not going to be the shortest, but it's valid in coverage.
 
-
-```{r}
-n = 1000
-n0 = 1000
-alpha = 0.05
-cov.box = c()
-
-for(i in 1:100){
-  x = rnorm(n, 0, 1)
-  x0 = rnorm(n0, 0, 1)
-  
-  beta = runif(1, min = 0, max = alpha)
-  
-  lower_q = lower.quantile(c(x, Inf), prob = beta, w = rep(1, length(x)+1), sorted = FALSE)
-    upper_q = upper.quantile(c(x, Inf), prob = beta + (1 - alpha), w = rep(1, length(x)+1), sorted = FALSE)
-  
-  
-  coverage.x0 = 1-mean(lower_q<= x0 & upper_q >=x0)
-  cov.box = c(cov.box, coverage.x0)
-}
-
-boxplot(cov.box, main = paste(expression(alpha), '=', alpha, 'n=', n))
-lines(x = 0:5, y = rep(alpha,6), col = 'red')
-lines(x = 0:5, y = rep(mean(cov.box),6), col = 'blue')
-```
-
-Our cross validation method
+### Prediction interval using cross validation
 
 ```{r}
-n = 1000
-n0 = 1000
-alpha = 0.05
 K = 2
-alpha_iter = seq(alpha/50, alpha, alpha/50)
-cov.box = c()
-
-for(i in 1:100){
-  x = rnorm(n, 0, 1)
-  x0 = rnorm(n0, 0, 1)
+n = 1000 ## training sample size
+n0 = 1000 ## test sample size
+alpha = 0.05 ## nonimal error rate
+n_exp = 100 # number of experiments
+cov.box = vector(mode="double", length=n_exp)
+for(i in 1:n_exp){
+  res = get.interval(METHOD = 3, DIST = "Normal", n = n, test_n = n0, K=K, test_data = T)
+  x = res$data
+  x0 = res$test_dataset
+  cv_lower_q = res$interval[1]
+  cv_upper_q = res$interval[2]
   
-  pre.cov = 0
-  beta = alpha/2
-  #Find the quantiles producing the shortest 1-alpha interval through cross-validation
-  folds = foldr(length(x), K, rep=1)
-  for(k in 1:K){
-    fold = as.vector(folds[[1]][[k]])
-    xtest = x[fold]
-    xtrain  = x[-fold]
-    j <- 1
-    prev_length = Inf
-    while(alpha_iter[j]<alpha){
-    lower_q = lower.quantile(c(xtrain, Inf), prob = alpha_iter[j], w = rep(1, length(xtrain)+1), sorted = FALSE)
-    upper_q = upper.quantile(c(xtrain, Inf), prob = alpha_iter[j] + (1 - alpha), w = rep(1, length(xtrain)+1), sorted = FALSE)
-    if((upper_q-lower_q) < prev_length){
-      shortest_lower_q = lower_q
-      shortest_upper_q = upper_q
-      prev_length = upper_q-lower_q
-      k.beta = alpha_iter[j]
-    }
-    j = j+1
-    }
-    k.cov = mean(shortest_lower_q<= xtest & shortest_upper_q >=xtest)
-    if(k.cov>pre.cov){
-      pre.cov = k.cov
-      beta = k.beta
-    }
-  }
-  
-  shortest_lower_q = lower.quantile(c(x, Inf), prob = beta, w = rep(1, length(x)+1), sorted = FALSE)
-  shortest_upper_q = upper.quantile(c(x, Inf), prob = beta + (1 - alpha), w = rep(1, length(x)+1), sorted = FALSE)
-  coverage.x0 = 1-mean(shortest_lower_q<= x0 & shortest_upper_q >=x0)
-  cov.box = c(cov.box, coverage.x0)
+  coverage.x0 = 1-mean(cv_lower_q<= x0 & cv_upper_q >=x0)
+  cov.box[i] = coverage.x0
 }
 
 boxplot(cov.box, main = paste(expression(alpha), '=', alpha, 'n=', n))
-lines(x = 0:5, y = rep(alpha,6), col = 'red')
-lines(x = 0:5, y = rep(mean(cov.box),6), col = 'blue')
-
+abline(h = alpha, col = 'red')
 ```
 
+
+
+
+### Data Driven Prediction interval
+
+```{r}
+n = 1000 ## training sample size
+n0 = 1000 ## test sample size
+alpha = 0.05 ## nonimal error rate
+n_exp = 100 # number of experiments
+cov.box = vector(mode="double", length=n_exp)
+for(i in 1:n_exp){
+  res = get.interval(METHOD = 4, DIST = "Normal", n = n, test_n = n0, test_data = T)
+  x = res$data
+  x0 = res$test_dataset
+  dv_lower_q = res$interval[1]
+  dv_upper_q = res$interval[2]
+  
+  coverage.x0 = 1-mean(dv_lower_q<= x0 & dv_upper_q >=x0)
+  cov.box[i] = coverage.x0
+}
+
+boxplot(cov.box, main = paste(expression(alpha), '=', alpha, 'n=', n))
+abline(h = alpha, col = 'red')
+```
 
 
