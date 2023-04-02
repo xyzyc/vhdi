@@ -1,16 +1,15 @@
-# Generated from rdhi.Rmd: do not edit by hand
 
-#' Cross validation for the boost of shortest prediction interval  
-#' 
+#' Cross validation for the boost of shortest prediction interval
+#'
 #' @param x data
 #' @param alpha nominal error rate
 #' @param K fold
 #' @importFrom lava foldr
-#' 
+#'
 #' @export
 cv.pi <- function(x, alpha, K = 2){
   n = length(x)
-  t.iter = seq(0, min(1.12*sqrt(alpha/n), alpha - 4/n), 
+  t.iter = seq(0, min(1.12*sqrt(alpha/n), alpha - 4/n),
                by = min(1.12*sqrt(alpha/n), alpha - 4/n)/10)
   folds = foldr(n, K, rep=1)
   pre.cov = 0

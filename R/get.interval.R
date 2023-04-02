@@ -1,9 +1,9 @@
 # Generated from rdhi.Rmd: do not edit by hand
 
 #' Get the prediction interval using a simulated data set
-#' 
-#' Get the prediction interval by a chosen method using a simulated data set. The simulated data are generated from standard Normal distribution, standard Uniform distribution, standard Exponential distribution or standard Gamma distribution unless more parameters for the distribution are specified. 
-#' 
+#'
+#' Get the prediction interval by a chosen method using a simulated data set. The simulated data are generated from standard Normal distribution, standard Uniform distribution, standard Exponential distribution or standard Gamma distribution unless more parameters for the distribution are specified.
+#'
 #' @importFrom stats rexp
 #' @importFrom stats rnorm
 #' @importFrom stats runif
@@ -22,7 +22,7 @@
 #' \item{data}{simulated data}
 #' \item{test_dataset}{test data}
 #' @export
-get.interval <- function(METHOD = "Shortest", DIST = "Normal", 
+get.interval <- function(METHOD = "Shortest", DIST = "Normal",
                          n = 100, test_n = 100, alpha = 0.05, test_data = F,
                          K = 2, beta, ...){
   if(length(list(...)) == 0){
@@ -58,13 +58,13 @@ get.interval <- function(METHOD = "Shortest", DIST = "Normal",
       stop("DIST is invalid!")
     }
   }
-  
+
   methods = 1:4
-  names(methods) = c("Random Position", "Shortest", 
-                     "Cross Validation", "Data Driven")
-  
+  names(methods) = c("Random Position", "Shortest",
+                     "Cross Validation", "Conservative")
+
   METHOD = ifelse(is.character(METHOD), methods[METHOD], METHOD)
-  
+
   if(METHOD == 1){
       interval = random.pi(data, alpha, beta)
     }else if(METHOD == 2){
@@ -72,11 +72,11 @@ get.interval <- function(METHOD = "Shortest", DIST = "Normal",
     }else if(METHOD == 3){
       interval = cv.pi(data, alpha, K)
     }else if(METHOD == 4){
-      interval = data.driven.pi(data, alpha)
+      interval = conservative.pi(data, alpha)
     }else{
       stop("METHOD is invalid!")
     }
-  
+
   if(test_data){
     return(list(interval = interval, data = data, test_dataset = reference_data))
   }else{
