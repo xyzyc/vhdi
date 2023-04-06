@@ -12,6 +12,7 @@ get.interval(
   alpha = 0.05,
   test_data = F,
   K = 2,
+  shape = 5,
   beta,
   ...
 )
@@ -29,7 +30,9 @@ get.interval(
 
 \item{test_data}{whether generate the test data}
 
-\item{K}{k-fold cross-validation. Only neeed when METHOD is "Cross Validation", with default 2.}
+\item{K}{k-fold cross-validation. Only needed when METHOD is "Cross Validation", with default 2.}
+
+\item{shape}{shape parameter needed for the standard Gamma distribution, with default 5.}
 
 \item{beta}{a random position. Only needed when METHOD is "Random Position". beta must be less than or equal to alpha.}
 

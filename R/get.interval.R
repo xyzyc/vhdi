@@ -14,8 +14,9 @@
 #' @param test_n Number of observations for the test data
 #' @param alpha nominal error rate
 #' @param test_data whether generate the test data
-#' @param K k-fold cross-validation. Only neeed when METHOD is "Cross Validation", with default 2.
+#' @param K k-fold cross-validation. Only needed when METHOD is "Cross Validation", with default 2.
 #' @param beta a random position. Only needed when METHOD is "Random Position". beta must be less than or equal to alpha.
+#' @param shape shape parameter needed for the standard Gamma distribution, with default 5.
 #' @param ... arguments passed to or from distributions
 #' @returns A list.
 #' \item{interval}{prediction interval}
@@ -24,7 +25,7 @@
 #' @export
 get.interval <- function(METHOD = "Shortest", DIST = "Normal",
                          n = 100, test_n = 100, alpha = 0.05, test_data = F,
-                         K = 2, beta, ...){
+                         K = 2, shape = 5, beta, ...){
   if(length(list(...)) == 0){
     if(DIST == "Normal"){
       data = rnorm(n, mean = 0, sd = 1)
@@ -36,8 +37,8 @@ get.interval <- function(METHOD = "Shortest", DIST = "Normal",
       data = rexp(n, rate = 1)
       if(test_data) reference_data = rexp(test_n, rate = 1)
     }else if(DIST == "Gamma"){
-      data = rgamma(n, rate = 1)
-      if(test_data) reference_data = rgamma(test_n, rate = 1)
+      data = rgamma(n, shape = shape, rate = 1)
+      if(test_data) reference_data = rgamma(test_n, shape = shape, rate = 1)
     }else{
       stop("DIST is invalid!")
     }
