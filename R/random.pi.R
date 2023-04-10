@@ -6,6 +6,12 @@
 #' @param alpha nominal error rate
 #' @param beta a random position. beta must be less than or equal to alpha.
 #' @export
+#' @examples
+#' \dontrun{
+#' example_data <- rnorm(500, 0, 5)
+#' random.pi(x, alpha = 0.05, beta = 0.01)
+#' }
+#'
 random.pi <- function(x, alpha, beta){
   if(is.null(beta)) beta = alpha/2
   if(beta > alpha) stop("Invalid beta!")

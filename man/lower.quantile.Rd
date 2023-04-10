@@ -18,3 +18,15 @@ lower.quantile(v, prob, w = NULL, sorted = FALSE)
 \description{
 Calculate the lower quantile for data with weights
 }
+\examples{
+\dontrun{
+example_data <- rnorm(500, 0, 5)
+
+# Find the lower 0.975 quantile
+lower.quantile(x, prob = 0.975)
+
+# Find the lower 0.025 quantile
+lower.quantile(x, prob = 0.975)
+}
+
+}

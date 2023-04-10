@@ -14,3 +14,10 @@ conservative.pi(x, alpha)
 \description{
 Conservative prediction interval
 }
+\examples{
+\dontrun{
+example_data <- rnorm(500, 0, 5)
+conservative.pi(example_data, alpha = 0.01)
+}
+
+}

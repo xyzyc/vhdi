@@ -47,3 +47,19 @@ A list.
 \description{
 Get the prediction interval by a chosen method using a simulated data set. The simulated data are generated from standard Normal distribution, standard Uniform distribution, standard Exponential distribution or standard Gamma distribution unless more parameters for the distribution are specified.
 }
+\examples{
+\dontrun{
+# Random position method
+get.interval(METHOD = "Random Position")
+
+# Shortest method
+get.interval(METHOD = "Shortest")
+
+# Uniform distribution
+get.interval(DIST = "Uniform")
+
+# Normal distribution
+get.interval(DIST = "Normal")
+}
+
+}

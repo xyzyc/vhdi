@@ -7,6 +7,12 @@
 #' @importFrom lava foldr
 #'
 #' @export
+#' @examples
+#' \dontrun{
+#' example_data <- rnorm(500, 0, 5)
+#' cv.pi(example_data, 0.01)
+#' }
+#'
 cv.pi <- function(x, alpha, K = 2){
   n = length(x)
   t.iter = seq(0, min(1.12*sqrt(alpha/n), alpha - 4/n),

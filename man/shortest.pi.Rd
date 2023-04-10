@@ -14,3 +14,10 @@ shortest.pi(x, alpha)
 \description{
 Calculate shortest prediction interval
 }
+\examples{
+\dontrun{
+example_data <- rnorm(500, 0, 5)
+shortest.pi(example_data, alpha = 0.01)
+}
+
+}

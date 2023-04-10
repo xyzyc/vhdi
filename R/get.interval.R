@@ -23,6 +23,21 @@
 #' \item{data}{simulated data}
 #' \item{test_dataset}{test data}
 #' @export
+#' @examples
+#' \dontrun{
+#' # Random position method
+#' get.interval(METHOD = "Random Position")
+#'
+#' # Shortest method
+#' get.interval(METHOD = "Shortest")
+#'
+#' # Uniform distribution
+#' get.interval(DIST = "Uniform")
+#'
+#' # Normal distribution
+#' get.interval(DIST = "Normal")
+#' }
+#'
 get.interval <- function(METHOD = "Shortest", DIST = "Normal",
                          n = 100, test_n = 100, alpha = 0.05, test_data = F,
                          K = 2, shape = 5, beta, ...){

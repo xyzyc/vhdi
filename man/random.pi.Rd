@@ -16,3 +16,10 @@ random.pi(x, alpha, beta)
 \description{
 Calculate shortest prediction interval
 }
+\examples{
+\dontrun{
+example_data <- rnorm(500, 0, 5)
+random.pi(x, alpha = 0.05, beta = 0.01)
+}
+
+}

@@ -1,11 +1,17 @@
 # Generated from rdhi.Rmd: do not edit by hand
 
-#' Calculate shortest prediction interval  
-#' 
+#' Calculate shortest prediction interval
+#'
 #' @param x data
 #' @param alpha nominal error rate
-#' 
+#'
 #' @export
+#' @examples
+#' \dontrun{
+#' example_data <- rnorm(500, 0, 5)
+#' shortest.pi(example_data, alpha = 0.01)
+#' }
+#'
 shortest.pi <- function(x, alpha){
   alpha_iter = seq(alpha/50, alpha, alpha/50)
   j <- 1

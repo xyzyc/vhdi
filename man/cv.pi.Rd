@@ -16,3 +16,10 @@ cv.pi(x, alpha, K = 2)
 \description{
 Cross validation for the boost of shortest prediction interval
 }
+\examples{
+\dontrun{
+example_data <- rnorm(500, 0, 5)
+cv.pi(example_data, 0.01)
+}
+
+}

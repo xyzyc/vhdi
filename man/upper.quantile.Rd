@@ -18,3 +18,15 @@ upper.quantile(v, prob, w = NULL, sorted = FALSE)
 \description{
 Calculate the upper quantile for data with weights
 }
+\examples{
+\dontrun{
+example_data <- rnorm(500, 0, 5)
+
+# Find the upper 0.975 quantile
+lower.quantile(x, prob = 0.975)
+
+# Find the upper 0.025 quantile
+lower.quantile(x, prob = 0.975)
+}
+
+}

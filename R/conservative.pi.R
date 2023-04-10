@@ -6,6 +6,13 @@
 #' @importFrom purrr map_df
 #' @importFrom magrittr "%>%"
 #' @export
+#' @examples
+#' \dontrun{
+#' example_data <- rnorm(500, 0, 5)
+#' conservative.pi(example_data, alpha = 0.01)
+#' }
+#'
+
 conservative.pi <- function(x, alpha){
   n = length(x)
   k = ceiling(n*(1-alpha) + 1.12*sqrt(n*alpha))
