@@ -8,7 +8,7 @@
 #' @importFrom stats rnorm
 #' @importFrom stats runif
 #' @importFrom stats rgamma
-#' @param METHOD a character string or a number giving the method to be used. This must match one of "Random Position", "Shortest", "Cross Validation" or "Conservative", with default "Shortest". 1, 2, 3, 4 refer to  "Random Position", "Shortest", "Cross Validation" and "Data Driven" respectively.
+#' @param METHOD a character string or a number giving the method to be used. This must match one of "Random Position", "Shortest", "Cross Validation" or "Conservative", with default "Shortest". 1, 2, 3, 4 refer to  "Random Position", "Shortest", "Cross Validation" and "Conservative" respectively.
 #' @param DIST distribution that the simulated data from. This must match one of "Normal", "Uniform", "Exponential", "Gamma", with default "Normal".
 #' @param n Number of observations for the simulated data
 #' @param test_n Number of observations for the test data
