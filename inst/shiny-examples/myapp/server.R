@@ -48,7 +48,7 @@ function(input, output, session) {
              code = 3, col = "red", lwd =2,
              angle = 90, length = 0.1)
       cols <- c(cols, 'red')
-      methods <- c(methods, 'Conversvative')
+      methods <- c(methods, 'Conservative')
 
     }
 
