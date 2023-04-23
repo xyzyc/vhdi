@@ -78,46 +78,102 @@ server <- function(input, output) {
     get.data(DIST = dist, n, shape = input$gamma_shape)
   }, ignoreNULL = FALSE)
 
+  output$k_selected <- renderUI({
+    if ('Cross Validation' %in% input$method) {
+      numericInput("k_selected", "K", 2, min = 2, max = 10)
+    }
+  })
+
   output$slider <- renderUI({
+    if ('Random Position' %in% input$method) {
     sliderInput("beta", "Beta", value = 0.01, min = 0.005,  max = min(input$alpha, 0.25))
+    }
+  })
+
+  paras = reactive({
+    if(is.null(input$k_selected) && is.null(input$beta)) return(NULL)
+    if(is.null(input$k_selected)) {
+      return(list('beta' = input$beta))
+      }else if(is.null(input$beta)) {
+      return(list('k' = input$k_selected))
+      }else{
+        list('beta' = input$beta, 'k' = input$k_selected)
+    }
   })
 
   intervals = reactive({
     data = res()$data
     method = input$method
-    interv = get.interval.with.data(data, METHOD = method, alpha = input$alpha,
-                                    K = as.numeric(input$k_selected), beta = as.numeric(input$beta))
+    paras = paras()
+    if(is.null(paras)) return(NULL)
+    if('Random Position' %in% input$method && is.null(input$beta)) return(NULL)
+    if('Cross Validation' %in% input$method && is.null(input$k_selected)) return(NULL)
+    intervs = lapply(method, function(x) get.interval.with.data(data, METHOD = x, alpha = input$alpha,
+                                    K = as.numeric(paras$k), beta = as.numeric(paras$beta)))
+    names(intervs) = method
+    return(intervs)
   })
+
+
 
   output$plot <- renderPlot({
-    lower_q = intervals()$interval[1]
-    upper_q = intervals()$interval[2]
+    if(is.null(intervals())) return(NULL)
+    intervals = intervals()
+    lower_q = sapply(intervals, function(x) {x$interval[1]})
+    upper_q = sapply(intervals, function(x) {x$interval[2]})
     data = data.frame(value = res()$data)
-    ggplot(data, aes(x=value)) +
-      geom_histogram(bins=input$bins,fill="white", colour="black")+
-      geom_histogram(bins=input$bins,
-                     data=subset(data, value>lower_q & value<upper_q),
-                     colour="black", fill="grey")
+
+    p = ggplot(data, aes(x=value)) +
+        geom_histogram(bins=input$bins,fill="white", colour="black")
+    ggp_build = ggplot_build(p)
+    limits = max(ggp_build[["data"]][[1]][["count"]])
+    y = seq(0, limits, length.out = 25)[2:(length(intervals)+1)]
+    intervs = data.frame(lower_q, upper_q, y = y, yend = y,
+                         color = c("red", "blue", "darkgreen", "orchid3")[1:length(intervals)])
+    p +
+      geom_segment(aes(x = lower_q, y = y, xend = upper_q, yend = yend, color = color),
+                   size = 4, data = intervs, linewidth = 1,
+                   arrow = arrow(length = unit(0.1, "inches"), ends = 'both')) +
+      scale_color_manual(name = "Method", values = c("red", "blue", "darkgreen", "orchid3")[1:length(intervals)],
+                         breaks = c("red", "blue", "darkgreen", "orchid3")[1:length(intervals)], labels = input$method)
   })
 
-  # Generate a summary of the data ----
-  output$summary <- renderPrint({
-    summary(d())
-  })
+
 
   # Generate an HTML table view of the data ----
-  output$table <- renderDT({
-    lower_q = intervals()$interval[1]
-    upper_q = intervals()$interval[2]
+  output$summary <- renderDT({
+    if(is.null(intervals())) return(NULL)
     data = res()$data
-    df = data.frame(lower_q, upper_q, upper_q - lower_q,
-               t(as.vector(summary(data))))
-    names(df) = c('Lower Bound', 'Upper Bound', 'Inteval Length',
-    'Min.',  '1st Qu.',   'Median',     'Mean',  '3rd Qu.',     'Max.')
+    df = data.frame(t(as.vector(summary(data))))
+    names(df) = c('Min.',  '1st Qu.',   'Median',     'Mean',  '3rd Qu.',     'Max.')
     df = df %>%
-      mutate(across(where(is.numeric), round, digits = 2))
+      mutate(across(where(is.numeric), \(x) round(x, digits = 2)))
     as.data.frame(df) %>%
       datatable(
+        caption = 'Data Summary',
+        rownames = FALSE,
+        options = list(
+          dom = 't',
+          autoWidth = FALSE,
+          columnDefs = list(
+            list(width = '50px', targets = "_all"),
+            list(className = 'dt-center', targets = "_all"))
+        )
+      )
+  })
+
+  output$table <- renderDT({
+    if(is.null(intervals())) return(NULL)
+    intervals = intervals()
+    lower_q = sapply(intervals, function(x) {x$interval[1]})
+    upper_q = sapply(intervals, function(x) {x$interval[2]})
+    df = data.frame(input$method, lower_q, upper_q, upper_q - lower_q)
+    names(df) = c('Method', 'Lower Bound', 'Upper Bound', 'Inteval Length')
+    df = df %>%
+      mutate(across(where(is.numeric), \(x) round(x, digits = 2)))
+    as.data.frame(df) %>%
+      datatable(
+        caption = 'Interval Information',
         rownames = FALSE,
         options = list(
           dom = 't',

@@ -57,32 +57,33 @@ ui <- fluidPage(
 
                            br(),
                            # Input: Select the method type ----
-                           radioButtons("method", "Method:",
-                                        c("Random Position" = "Random Position",
-                                          "Shortest" = "Shortest",
-                                          "Cross Validation" = "Cross Validation",
-                                          "Conservative" = "Conservative"),
-                                        selected = "Cross Validation"),
-
+                           # radioButtons("method", "Method:",
+                           #              c("Random Position" = "Random Position",
+                           #                "Shortest" = "Shortest",
+                           #                "Cross Validation" = "Cross Validation",
+                           #                "Conservative" = "Conservative"),
+                           #              selected = "Cross Validation"),
+                           checkboxGroupInput("method", "Method:",
+                                              choices = c("Random Position" = "Random Position",
+                                                "Shortest" = "Shortest",
+                                                "Cross Validation" = "Cross Validation",
+                                                "Conservative" = "Conservative"),
+                                              selected = c("Cross Validation", "Conservative")),
                            br(),
 
-                           conditionalPanel(
-                             condition = "input.method == 'Cross Validation'",
-                             numericInput("k_selected", "K", 2, min = 2, max = 10)
-                           ),
+                           uiOutput("k_selected"),
 
                            br(),
-
-                           conditionalPanel(
-                             condition = "input.method == 'Random Position'",
-                             uiOutput("slider")
-                           )
+                           uiOutput("slider"),
 
                          ),
 
                          # Main panel for displaying outputs ----
                          mainPanel(
                            plotOutput("plot"),
+                           fluidRow(
+                             column(3, align="center"),
+                             DT::dataTableOutput("summary")),
                            fluidRow(
                              column(3, align="center"),
                              DT::dataTableOutput("table"))
@@ -94,6 +95,4 @@ ui <- fluidPage(
               tabPanel("Comparison"),
               tabPanel("About")
   )
-
-
 )
