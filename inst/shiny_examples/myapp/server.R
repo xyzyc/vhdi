@@ -1,6 +1,7 @@
 library(vhdi)
 library(ggplot2)
-
+library(DT)
+library(dplyr)
 get.data <- function(DIST = "Normal",
                      n = 100, test_n = 100, test_data = F, shape = 5, beta, ...){
   if(length(list(...)) == 0){
@@ -105,10 +106,27 @@ server <- function(input, output) {
   })
 
   # Generate an HTML table view of the data ----
-  output$table <- renderTable({
+  output$table <- renderDT({
     lower_q = intervals()$interval[1]
     upper_q = intervals()$interval[2]
-    data.frame('Lower Bound' = lower_q, 'Upper Bound' = upper_q)
+    data = res()$data
+    df = data.frame(lower_q, upper_q, upper_q - lower_q,
+               t(as.vector(summary(data))))
+    names(df) = c('Lower Bound', 'Upper Bound', 'Inteval Length',
+    'Min.',  '1st Qu.',   'Median',     'Mean',  '3rd Qu.',     'Max.')
+    df = df %>%
+      mutate(across(where(is.numeric), round, digits = 2))
+    as.data.frame(df) %>%
+      datatable(
+        rownames = FALSE,
+        options = list(
+          dom = 't',
+          autoWidth = FALSE,
+          columnDefs = list(
+            list(width = '50px', targets = "_all"),
+            list(className = 'dt-center', targets = "_all"))
+        )
+      )
   })
 
 

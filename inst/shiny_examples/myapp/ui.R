@@ -1,3 +1,4 @@
+library(DT)
 # Define UI for random distribution app ----
 ui <- fluidPage(
 
@@ -82,8 +83,9 @@ ui <- fluidPage(
                          # Main panel for displaying outputs ----
                          mainPanel(
                            plotOutput("plot"),
-                           tableOutput("table"),
-                           textOutput(outputId = "Check")
+                           fluidRow(
+                             column(3, align="center"),
+                             DT::dataTableOutput("table"))
 
                          )
                        )
