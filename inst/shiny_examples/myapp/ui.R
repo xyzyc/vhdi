@@ -48,10 +48,10 @@ ui <- fluidPage(
                            br(),
 
                            # Input: Slider for the number of observations to generate ----
-                           sliderInput("n",
+                           sliderInput("n_obs",
                                        "Number of observations:",
                                        value = 500,
-                                       min = 1,
+                                       min = 100,
                                        max = 1000),
 
                            br(),
@@ -67,7 +67,7 @@ ui <- fluidPage(
                                        "Alpha:",
                                        value = 0.05,
                                        min = 0.005,
-                                       max = 0.25),
+                                       max = 0.25, step = 0.005),
 
                            br(),
 
@@ -111,13 +111,27 @@ ui <- fluidPage(
                          # Sidebar panel for inputs ----
                          sidebarPanel(
 
+                           actionButton("start", "Start Simulation"),
+                           helpText('Press `Start Simulation` button to start simulation.'),
+
                            # Input: Slider for the number of observations to generate ----
                            numericInput("num",
                                        "Number of simulations:",
-                                       100,
-                                       step = 1000,
+                                       50,
+                                       step = 10,
+                                       min = 50,
+                                       max = 100),
+
+                           br(),
+
+                           # Input: Slider for the number of observations to generate ----
+                           sliderInput("n",
+                                       "Number of observations:",
+                                       value = 100,
                                        min = 100,
-                                       max = 1000),
+                                       max = 500,
+                                       step = 100),
+                           helpText('Number of observations in each simulation'),
 
                            br(),
 
@@ -146,7 +160,8 @@ ui <- fluidPage(
                                        "Alpha:",
                                        value = 0.05,
                                        min = 0.005,
-                                       max = 0.25),
+                                       max = 0.25,
+                                       step = 0.005),
 
                            h4('Random Position'),
 
@@ -160,10 +175,7 @@ ui <- fluidPage(
 
                          # Main panel for displaying outputs ----
                          mainPanel(
-                           plotOutput("comparison.plot"),
-                           conditionalPanel("$('#comparison.plot').hasClass('recalculating')",
-                                            tags$div('Loading ... ')
-                           )
+                           plotOutput("comparison.plot")
                          )
                        )
               ),

@@ -2,6 +2,8 @@ library(vhdi)
 library(ggplot2)
 library(DT)
 library(dplyr)
+library(reshape2)
+
 get.data <- function(DIST = "Normal",
                      n = 100, test_n = 100, test_data = F, shape = 5, beta, ...){
   if(length(list(...)) == 0){
@@ -96,7 +98,7 @@ server <- function(input, output) {
 
   output$slider <- renderUI({
     if ('Random Position' %in% input$method) {
-      sliderInput("beta", "Beta", value = 0.01, min = 0.005,  max = min(input$alpha, 0.25))
+      sliderInput("beta", "Beta", value = 0.01, min = 0.005,  max = min(input$alpha, 0.25), step = 0.005)
     }
   })
 
@@ -199,19 +201,32 @@ server <- function(input, output) {
   ##########comparison tab
 
   output$Random.beta <- renderUI({
-    sliderInput("ran.beta", "Beta:", value = 0.01, min = 0.005,  max = min(input$method.alpha, 0.25))
+    sliderInput("ran.beta", "Beta:", value = 0.01, min = 0.005,  max = min(input$method.alpha, 0.25),
+                step = 0.005)
   })
 
-
-  output$comparison.plot <- renderPlot({
+  res2 <- eventReactive(input$start, {
     if(is.null(input$Cross.K) || is.null(input$ran.beta)) return(NULL)
-    num = input$num
-    n = 200
+
+    n = input$n_obs
 
     normal_data = lapply(1:num, function(x) get.data(DIST = 'Normal', n, mean = input$nor_mean, sd = input$nor_sd, test_data = T))
     uni_data = lapply(1:num, function(x) get.data(DIST = 'Uniform', n, min = input$uni_min, max = input$uni_max, test_data = T))
     exp_data = lapply(1:num, function(x) get.data(DIST = 'Exponential', n, rate = input$exp_rate, test_data = T))
     gamma_data = lapply(1:num, function(x) get.data(DIST = 'Gamma', n, shape = input$gam_shape, test_data = T))
+
+    return(list(normal_data = normal_data, uni_data = uni_data, exp_data = exp_data, gamma_data = gamma_data,
+                alpha = input$method.alpha, K = as.numeric(input$Cross.K), beta = as.numeric(input$ran.beta)))
+
+  })
+
+
+  plot_tbl = reactive({
+    num = input$num
+    normal_data = res2()$normal_data
+    uni_data = res2()$uni_data
+    exp_data = res2()$exp_data
+    gamma_data = res2()$gamma_data
 
     method = c("Random Position", "Shortest", "Cross Validation", "Conservative")
 
@@ -221,20 +236,20 @@ server <- function(input, output) {
     res4 = matrix(0, nrow = num, ncol = 8)
     withProgress(message = 'Making plot', value = 0, {
       for (i in 1:num) {
-        res1[i, ] = unlist(sapply(method, function(x) get.interval.with.data(normal_data[[i]]$data, METHOD = x, alpha = input$method.alpha,
-                                                                                                        K = as.numeric(input$Cross.K), beta = as.numeric(input$ran.beta))))
-        res2[i, ] = unlist(sapply(method, function(x) get.interval.with.data(uni_data[[i]]$data, METHOD = x, alpha = input$method.alpha,
-                                                                        K = as.numeric(input$Cross.K), beta = as.numeric(input$ran.beta))))
+        res1[i, ] = unlist(sapply(method, function(x) get.interval.with.data(normal_data[[i]]$data, METHOD = x, alpha = res2()$alpha,
+                                                                             K = res2()$K, beta = res2()$beta)))
+        res2[i, ] = unlist(sapply(method, function(x) get.interval.with.data(uni_data[[i]]$data, METHOD = x, alpha = res2()$alpha,
+                                                                             K = res2()$K, beta = res2()$beta)))
 
-        res3[i, ] = unlist(sapply(method, function(x) get.interval.with.data(exp_data[[i]]$data, METHOD = x, alpha = input$method.alpha,
-                                                                        K = as.numeric(input$Cross.K), beta = as.numeric(input$ran.beta))))
+        res3[i, ] = unlist(sapply(method, function(x) get.interval.with.data(exp_data[[i]]$data, METHOD = x, alpha = res2()$alpha,
+                                                                             K = res2()$K, beta = res2()$beta)))
 
-        res4[i, ] = unlist(sapply(method, function(x) get.interval.with.data(gamma_data[[i]]$data, METHOD = x, alpha = input$method.alpha,
-                                                                        K = as.numeric(input$Cross.K), beta = as.numeric(input$ran.beta))))
+        res4[i, ] = unlist(sapply(method, function(x) get.interval.with.data(gamma_data[[i]]$data, METHOD = x, alpha = res2()$alpha,
+                                                                             K = res2()$K, beta = res2()$beta)))
 
 
         # Increment the progress bar, and update the detail text.
-        incProgress(1/num, detail = paste(i, "%"))
+        incProgress(1/num, detail = paste(i, "simulations done"))
 
       }
     })
@@ -250,7 +265,7 @@ server <- function(input, output) {
 
 
     c2 = sapply(1:num, function(i) {
-      test = normal_data[[i]]$test_dataset
+      test = uni_data[[i]]$test_dataset
 
       c(1-mean(res2[i, 1]<= test & res2[i, 2] >=test),
         1-mean(res2[i, 3]<= test & res2[i, 4] >=test),
@@ -259,7 +274,7 @@ server <- function(input, output) {
     })
 
     c3 = sapply(1:num, function(i) {
-      test = normal_data[[i]]$test_dataset
+      test = exp_data[[i]]$test_dataset
 
       c(1-mean(res3[i, 1]<= test & res3[i, 2] >=test),
         1-mean(res3[i, 3]<= test & res3[i, 4] >=test),
@@ -268,7 +283,7 @@ server <- function(input, output) {
     })
 
     c4 = sapply(1:num, function(i) {
-      test = normal_data[[i]]$test_dataset
+      test = gamma_data[[i]]$test_dataset
 
       c(1-mean(res4[i, 1]<= test & res4[i, 2] >=test),
         1-mean(res4[i, 3]<= test & res4[i, 4] >=test),
@@ -276,21 +291,25 @@ server <- function(input, output) {
         1-mean(res4[i, 7]<= test & res4[i, 8] >=test))
     })
 
-    boxplot(t(c1))
-
-    # p = ggplot(data, aes(x=value)) +
-    #   geom_histogram(bins=input$bins,fill="white", colour="black")
-    # ggp_build = ggplot_build(p)
-    # limits = max(ggp_build[["data"]][[1]][["count"]])
-    # y = seq(0, limits, length.out = 25)[2:(length(intervals)+1)]
-    # intervs = data.frame(lower_q, upper_q, y = y, yend = y,
-    #                      color = c("red", "blue", "darkgreen", "orchid3")[1:length(intervals)])
-    # p +
-    #   geom_segment(aes(x = lower_q, y = y, xend = upper_q, yend = yend, color = color),
-    #                size = 4, data = intervs, linewidth = 1,
-    #                arrow = arrow(length = unit(0.1, "inches"), ends = 'both')) +
-    #   scale_color_manual(name = "Method", values = c("red", "blue", "darkgreen", "orchid3")[1:length(intervals)],
-    #                      breaks = c("red", "blue", "darkgreen", "orchid3")[1:length(intervals)], labels = input$method)
+    df = data.frame(rbind(melt(t(c1))[ ,-1], melt(t(c2))[ ,-1], melt(t(c3))[ ,-1], melt(t(c4))[ ,-1]),
+                    rep(c('Normal', 'Uniform', 'Exponential', 'Gamma'), each = 4*num))
+    names(df) = c('method', 'coverage', 'distribution')
+    df$method = as.factor(df$method)
+    df$distribution = as.factor(df$distribution)
+    p = ggplot(df, aes(x=method, y=coverage, fill=method)) +
+      geom_boxplot() +
+      stat_summary(fun=mean, geom="point", shape=20, size=8, color="darkred", fill="darkred") +
+      facet_wrap(~distribution) +
+      labs(fill="Method") + xlab("") +
+      scale_fill_discrete(breaks = 1:4,
+                          labels = c("Random Position", "Shortest", "Cross Validation", "Conservative"))
+    return(list(p = p))
   })
+
+
+  output$comparison.plot <- renderPlot({
+    plot_tbl()$p
+  }, height = 600)
+
 
 }
