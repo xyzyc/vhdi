@@ -1,3 +1,4 @@
+library(DT)
 # Define UI for random distribution app ----
 ui <- fluidPage(
 
@@ -18,21 +19,40 @@ ui <- fluidPage(
                                           "Exponential" = "Exponential",
                                           "Gamma" = "Gamma")),
 
-                           br(),
-
-                           # Input: Slider for the number of observations to generate ----
-                           sliderInput("n",
-                                       "Number of observations:",
-                                       value = 500,
-                                       min = 1,
-                                       max = 1000),
 
                            br(),
+
+                           conditionalPanel(
+                             condition = "input.dist == 'Normal'",
+                             numericInput("normal.mean", "Mean: ", value=0),
+                             numericInput("normal.sd", "Standard deviation:",
+                                          value = 1, min=0.01)
+                           ),
+
+                           conditionalPanel(
+                             condition = "input.dist == 'Uniform'",
+                             numericInput("uniform.min", "Min: ", value=0),
+                             numericInput("uniform.max", "Max:", value = 1, min=1)
+                           ),
+
+                           conditionalPanel(
+                             condition = "input.dist == 'Exponential'",
+                             numericInput("exp.rate", "Rate: ", value=1)
+                           ),
 
                            conditionalPanel(
                              condition = "input.dist == 'Gamma'",
                              numericInput("gamma_shape", "Shape:", 5, min = 1, max = 10)
                            ),
+
+                           br(),
+
+                           # Input: Slider for the number of observations to generate ----
+                           sliderInput("n_obs",
+                                       "Number of observations:",
+                                       value = 500,
+                                       min = 100,
+                                       max = 1000),
 
                            br(),
 
@@ -47,7 +67,7 @@ ui <- fluidPage(
                                        "Alpha:",
                                        value = 0.05,
                                        min = 0.005,
-                                       max = 0.25),
+                                       max = 0.25, step = 0.005),
 
                            br(),
 
@@ -55,43 +75,110 @@ ui <- fluidPage(
                                         "Number of bins:", 50, min = 10, max = 80, step = 5),
 
                            br(),
-                           # Input: Select the method type ----
-                           radioButtons("method", "Method:",
-                                        c("Random Position" = "Random Position",
-                                          "Shortest" = "Shortest",
-                                          "Cross Validation" = "Cross Validation",
-                                          "Conservative" = "Conservative"),
-                                        selected = "Cross Validation"),
 
+                           checkboxGroupInput("method", "Method:",
+                                              choices = c("Random Position" = "Random Position",
+                                                "Shortest" = "Shortest",
+                                                "Cross Validation" = "Cross Validation",
+                                                "Conservative" = "Conservative"),
+                                              selected = c("Cross Validation", "Conservative")),
                            br(),
 
-                           conditionalPanel(
-                             condition = "input.method == 'Cross Validation'",
-                             numericInput("k_selected", "K", 2, min = 2, max = 10)
-                           ),
+                           uiOutput("k_selected"),
 
                            br(),
-
-                           conditionalPanel(
-                             condition = "input.method == 'Random Position'",
-                             uiOutput("slider")
-                           )
+                           uiOutput("slider")
 
                          ),
 
                          # Main panel for displaying outputs ----
                          mainPanel(
                            plotOutput("plot"),
-                           tableOutput("table"),
-                           textOutput(outputId = "Check")
+                           fluidRow(
+                             column(3, align="center"),
+                             DT::dataTableOutput("summary")),
+                           fluidRow(
+                             column(3, align="center"),
+                             DT::dataTableOutput("table"))
 
                          )
                        )
 
               ),
-              tabPanel("Comparison"),
+              tabPanel("Comparison",
+                       sidebarLayout(
+
+                         # Sidebar panel for inputs ----
+                         sidebarPanel(
+
+                           actionButton("start", "Start Simulation"),
+                           helpText('Press `Start Simulation` button to start simulation.'),
+
+                           # Input: Slider for the number of observations to generate ----
+                           numericInput("num",
+                                       "Number of simulations:",
+                                       50,
+                                       step = 10,
+                                       min = 50,
+                                       max = 100),
+
+                           br(),
+
+                           # Input: Slider for the number of observations to generate ----
+                           sliderInput("n",
+                                       "Number of observations:",
+                                       value = 100,
+                                       min = 100,
+                                       max = 500,
+                                       step = 100),
+                           helpText('Number of observations in each simulation'),
+
+                           br(),
+
+                           h3('Distribution'),
+
+                           h4('Normal Distribution'),
+
+                           numericInput("nor_mean", "Mean: ", value=0),
+                           numericInput("nor_sd", "Standard deviation:",
+                                        value = 1, min=0.01),
+
+                           h4('Uniform Distribution'),
+
+                           numericInput("uni_min", "Min: ", value=0),
+                           numericInput("uni_max", "Max:", value = 1, min=1),
+
+                           h4('Exponential Distribution'),
+                           numericInput("exp_rate", "Rate: ", value=1),
+
+                           h4('Gamma Distribution'),
+                           numericInput("gam_shape", "Shape:", 5, min = 1, max = 10),
+
+                           h3('Method'),
+
+                           sliderInput("method.alpha",
+                                       "Alpha:",
+                                       value = 0.05,
+                                       min = 0.005,
+                                       max = 0.25,
+                                       step = 0.005),
+
+                           h4('Random Position'),
+
+                           uiOutput("Random.beta"),
+
+                           h4('Cross Validation'),
+
+                           numericInput("Cross.K", "K:", 2, min = 2, max = 10),
+
+                         ),
+
+                         # Main panel for displaying outputs ----
+                         mainPanel(
+                           plotOutput("comparison.plot")
+                         )
+                       )
+              ),
               tabPanel("About")
   )
-
-
 )
