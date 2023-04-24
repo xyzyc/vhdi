@@ -2,3 +2,5 @@
 ^.*\.pdf
 ^.*\.Rproj$
 ^\.Rproj\.user$
+^doc$
+^Meta$

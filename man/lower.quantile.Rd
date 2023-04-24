@@ -4,14 +4,12 @@
 \alias{lower.quantile}
 \title{Calculate the lower quantile for data with weights}
 \usage{
-lower.quantile(v, prob, w = NULL, sorted = FALSE)
+lower.quantile(v, prob, sorted = FALSE)
 }
 \arguments{
 \item{v}{the data that we want to find quantile}
 
 \item{prob}{find the lower 100*prob\% quantile}
-
-\item{w}{weight for data}
 
 \item{sorted}{whether v has been sorted}
 }

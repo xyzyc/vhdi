@@ -1,5 +1,3 @@
-# Generated from rdhi.Rmd: do not edit by hand
-
 #' Get the prediction interval using a simulated data set
 #'
 #' Get the prediction interval by a chosen method using a simulated data set. The simulated data are generated from standard Normal distribution, standard Uniform distribution, standard Exponential distribution or standard Gamma distribution unless more parameters for the distribution are specified.

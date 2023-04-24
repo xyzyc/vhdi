@@ -2,19 +2,19 @@
 % Please edit documentation in R/random.pi.R
 \name{random.pi}
 \alias{random.pi}
-\title{Calculate shortest prediction interval}
+\title{Calculate prediction interval based on random position.}
 \usage{
-random.pi(x, alpha, beta)
+random.pi(x, alpha, beta = NULL)
 }
 \arguments{
 \item{x}{data}
 
 \item{alpha}{nominal error rate}
 
-\item{beta}{a random position. beta must be less than or equal to alpha.}
+\item{beta}{the left tail probability chosen at random. must be less than or equal to alpha.}
 }
 \description{
-Calculate shortest prediction interval
+Calculate prediction interval based on random position.
 }
 \examples{
 \dontrun{

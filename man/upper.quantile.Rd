@@ -4,14 +4,12 @@
 \alias{upper.quantile}
 \title{Calculate the upper quantile for data with weights}
 \usage{
-upper.quantile(v, prob, w = NULL, sorted = FALSE)
+upper.quantile(v, prob, sorted = FALSE)
 }
 \arguments{
 \item{v}{the data that we want to find quantile}
 
 \item{prob}{find the upper 100*prob\% quantile}
-
-\item{w}{weight for data}
 
 \item{sorted}{whether v has been sorted}
 }
