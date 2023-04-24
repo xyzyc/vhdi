@@ -9,8 +9,9 @@
 #' random.pi(x, alpha = 0.05, beta = 0.01)
 #' }
 #'
-random.pi <- function(x, alpha, beta = alpha/2){
+random.pi <- function(x, alpha, beta = NULL){
   if(is.null(beta)) beta = runif(1, 0, alpha)
+  print(beta)
   if(beta > alpha) stop("Invalid beta!")
   lower_q = lower.quantile(c(x, Inf), prob = beta, w = rep(1, length(x)+1), sorted = FALSE)
   upper_q = upper.quantile(c(x, Inf), prob = beta + (1 - alpha), w = rep(1, length(x)+1), sorted = FALSE)
