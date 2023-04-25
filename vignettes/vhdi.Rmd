@@ -25,7 +25,7 @@ library(vhdi)
 ## vhdi
 The package vhdi aims to give valid, data-driven highest density prediction interval.
 
-## Method
+## Methods
 We introduce three methods to generate the prediction intervals with robust coverage rate and shortest length. 
 
 Let $\mathbf{X} = (X_1,\cdots,X_n)$ be an i.i.d random sample from a distribution with continuous cumulative distribution function $F$. For a given nominal error rate $\alpha$, a $100((1-\alpha)\%$ prediction interval for an independent future observation $X_{n+1}$ from the same distribution is a random interval $(L(\mathbf{X}), U(\mathbf{X}))$ such that
@@ -43,11 +43,12 @@ where $k = \lceil (1-\alpha)(n+1) \rceil$. This is the method implemented in \te
 Or equivalently, we can search for $$\beta = \arg\min_{0\leq \beta\leq \alpha}\{X_{(r+k)} - X_{(r)}\},$$
 where $r = \lfloor (n+1)\beta\rfloor$ and $r+k = \lceil (n+1)(1-\alpha+\beta)\rceil$.
 
-If $r$(or $\beta$) is pre-specified or chosen at random, the above prediction interval $(X_{(r)}, X_{(r+k)})$ has coverage rate at least $1-\alpha$. However, the searching process introduces dependence to the data, and the selected shortest prediction interval will suffer from under-coverage problem.
+If $r$(or $\beta$) is pre-specified or chosen at random, the above prediction interval $(X_{(r)}, X_{(r+k)})$ has coverage rate at least $1-\alpha$. However, the searching process introduces dependence of the positioning on the data, and the selected shortest prediction interval will suffer from under-coverage problem.
 
 The function searching for the shortest interval is `shortest.pi`, which takes a data vector `x` and nominal error rate `alpha` as input, searches along a sequence of $\beta = \{k*\alpha/50\}_{k=1}^{50}$, and returns the shortest interval $(X_{(r)}, X_{(r+k)})$, where $r = \lfloor (n+1)\beta\rfloor$ and $r+k = \lceil (n+1)(1-\alpha+\beta)\rceil$.
 
 ```{r}
+set.seed(100723)
 ## simulate data from normal distribution as an example
 x <- rnorm(1000)
 alpha <- 0.05
@@ -129,6 +130,14 @@ The functions `upper.quantile` and `lower.quantile` gives the quantiles for a gi
 For a data vector `v` of length $n$, and the desired probability `prob`,  `upper.quantile` finds the $\lceil (n+1)prob \rceil$th order statistic of `v`
 and `lower.quantile` finds the $\lfloor (n+1)prob \rfloor$th order statistic of `v`. Note that `prob` always specifies the probability mass on the left tail. In this package, `upper.quantile` is usually used to find the $(1-\alpha+\beta)\times 100$ percentile and `lower.quantile` is usually used to find the $\beta\times 100$ percentile.
 
+### "No finite interval" warning
+
+Some times the functions `conservative.pi`, `shortest.pi`, `cv.pi` or `get.interval` may throw a warning message saying "No finite interval at given rate, returning min(x) and Inf", this is due to the sample size is not large enough for the given coverage rate. 
+
+For a sample of size $n$ $\{X_1, \cdots, X_n\}$, assume the $n$ points are distinct, then they segment the real line into $n+1$ parts: $(-Inf, X_{(1)}), (X_{(1)}, X_{(2)}),\cdots, (X_{(n)}, Inf)$. Any finite-length interval can have at most $\frac{n-1}{n+1}$ coverage rate. If the error rate used in calculation is less than $\frac{2}{n+1}$, it is impossible to get a finite interval.
+
+For `random.pi`, the positioning `beta` can impact the result as well. For $\beta< \frac{1}{n+1}$, no finite lower bound is possible; for $\beta > \alpha - \frac{1}{n+1}$, no finite upper bound is possible.
+
 ## Performance evaluated using simulated data
 
 ### Comparison of the coverage
@@ -143,7 +152,6 @@ The conservative prediction interval proposed by Frey(2013) guarantees valid cov
 
 
 ```{r, fig.width=8, fig.height=6}
-set.seed(100723)
 
 n <- 1000 ## training sample size
 n0 <- 1000 ## test sample size
@@ -297,4 +305,13 @@ abline(h = 1-alpha, col = 'red')
 
 boxplot(len.box, main = paste("Length", expression(alpha), '=', alpha, 'Log normal'), names = c("shortest", "random", "cross validation", "conservative"))
 ```
+
+## Future work
+
+So far, a solid understanding for the under coverage problem is still absent. Since when we choose $\beta$ independent of the data (given by the random positioning method), the prediction intervals have valid coverage rate without any correction on the nominal error rate, we believe the dependence of positioning on data is the cause of the under coverage problem. 
+
+A natural question is whether we can find the appropriate correction for each distribution. Frey(2013) give an approximate correction for uniform distribution, but it may be too conservative for other distributions. Our guess is the skewness and kurtosis of a distribution may impact the correction needed.
+
+The cross validation method works fairly well for different distributions, but the theoretical aspect of this method is not shown yet.
+
 
