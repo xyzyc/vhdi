@@ -16,5 +16,6 @@ random.pi <- function(x, alpha, beta = NULL){
   lower_q = lower.quantile(x, prob = beta, sorted = FALSE)
   upper_q = upper.quantile(x, prob = beta + (1 - alpha), sorted = FALSE)
   PI = c(lower_q, upper_q)
+  if(lower_q == -Inf | upper_q == Inf) warning("No finite interval at given rate and random position.")
   return(PI)
 }

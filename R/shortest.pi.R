@@ -31,7 +31,8 @@ shortest.pi <- function(x, alpha){
   if(find_finite){
     PI = c(shortest_lower_q, shortest_upper_q)
   }else {
-    stop("No finite interval at given coverage rate")
+    warning("No finite interval at given coverage rate, returning min(x) and Inf.")
+    PI = c(min(x), Inf)
   }
   return(PI)
 }
