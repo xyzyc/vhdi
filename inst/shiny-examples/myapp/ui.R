@@ -179,6 +179,50 @@ ui <- fluidPage(
                          )
                        )
               ),
-              tabPanel("About")
+              tabPanel("About",
+                       fluidRow(
+                         column(5,
+                                h4(p('About the vhdi package')),
+                                h5(p('The package vhdi aims to give valid, data-driven highest density prediction interval')),
+                                br(),
+                                h4(p('Usage')),
+                                h5(p('The user can generate prediction intervals with shortest lenght and robust coverage rate. The user can simulate data from normal, gamma, exponential, and uniform distributions.')),
+                                h5(p('The methods in vhdi for interval generation include:')),
+                                h5(p('- Shortest prediction interval')),
+                                h5(p('- Random positioning')),
+                                h5(p('- Conservative prediction interval')),
+                                h5(p('- Cross-validation prediction interval')),
+                                br(),
+                                h4(p('Interval Plot')),
+                                h5(p('The interval plot tab allows the user to test the different methods of prediction interval generation for a distribution of choice.')),
+                                h5(p('The first step is to select a destribution. Then, since the distribution parameterization differs among the distributions, the
+                                     distribution parameters will adjust accordingly to the selected distribution. Therefore, the second step is to adjust the
+                                     ditribution parameters.')),
+                                h5(p('The user can, then, select the number of observations to be simulated. It is important
+                                     to note that when any of the parameters associated with the distribution have been changed,
+                                     the user must press the button "Refresh".')),
+                                h5(p('The next step is to select the \u03B1 level and the number of bins for the graph.')),
+                                h5(p('Lastly, the user can select which methods they want to use for estimating prediction
+                                     intervals. Similarly to the distributions, some of the methods have additional parameter associated. Therefore,
+                                     the interface will adjust accordingly so the user can parameterize the method.
+                                     The selected methods will automatically be added to the graph for comparison purposes.')),
+                                br()),
+
+                         column(5,
+                                h4(p('Comparison')),
+                                h5(p('The comparison tab allows the user to compare the prediction intervals generated
+                                     for different distributions using the methods present in the package.')),
+                                h5(p('The four available distributions are listed in the user interface, along witht the
+                                     associated parameters. Similarly, the methods and their parameters are also listed
+                                     and suceptible to adjustment utilizing the user interface.')),
+                                h5(p('After parameterizing the distributions and the methods, the user can press the button "Start Simulation". Since
+                                     this process requires intensive computing and can be time consuming, a progressbar in the bottom-right corner of the
+                                     user interface will show how many simulation have been performed. It is important to note that
+                                     as the numbers of simulations and observations increase, this process takes longer to be executed.')),
+
+
+
+                                )
+                       ))
   )
 )
