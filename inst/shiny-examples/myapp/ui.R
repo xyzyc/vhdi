@@ -1,74 +1,184 @@
-#
-# This is the user-interface definition of a Shiny web application. You can
-# run the application by clicking 'Run App' above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
-#
+library(DT)
+# Define UI for random distribution app ----
+ui <- fluidPage(
 
-library(shiny)
-library(vhdi)
+  # App title ----
+  titlePanel("Prediction interval"),
 
+  tabsetPanel(type = "tabs",
+              tabPanel("Interval Plot",
+                       sidebarLayout(
 
-# Define UI for application that draws a histogram
-fluidPage(
+                         # Sidebar panel for inputs ----
+                         sidebarPanel(
 
-    # Application title
-    titlePanel("Valid prediction intervals"),
-
-    # Sidebar with a slider input for number of bins
-    sidebarLayout(
-        sidebarPanel(
-
-          selectInput("distribution","Choice of Distribution",
-                      choices = c("normal", "gamma"), selected = "normal"),
-          conditionalPanel(
-            condition = "input.distribution == 'normal'",
-            numericInput("normal.mean", "Mean: ", value=0),
-            numericInput("normal.sd", "Standard deviation:",
-                         value = 1, min=0.0001)
-          ),
-          conditionalPanel(
-            condition = 'input.distribution == "gamma"',
-            numericInput("gamma.shape", "Shape: ", value=1, min = 0.00001),
-            numericInput("gamma.scale", "Scale: ", value=1, min = 0.00001)
-          ),
+                           # Input: Select the random distribution type ----
+                           radioButtons("dist", "Simulation Distribution:",
+                                        c("Normal" = "Normal",
+                                          "Uniform" = "Uniform",
+                                          "Exponential" = "Exponential",
+                                          "Gamma" = "Gamma")),
 
 
+                           br(),
 
-          numericInput('sample_size',
-                       'Select your sample size',
-                       value = 100,
-                       min = 10,
-                       step = 10),
-          checkboxGroupInput('methods',
-                             'Interval prediction methods',
-                             choices = list('Conservative' = 1,
-                                         'Shortest' = 2,
-                                         'Cross validation' = 3,
-                                         'Random' = 4
-                                         ),
-                             selected = 1),
+                           conditionalPanel(
+                             condition = "input.dist == 'Normal'",
+                             numericInput("normal.mean", "Mean: ", value=0),
+                             numericInput("normal.sd", "Standard deviation:",
+                                          value = 1, min=0.01)
+                           ),
 
-          conditionalPanel(
-            condition = 'input.methods.includes("4")',
-            numericInput("random.beta",
-                         "Beta parameter for random: ",
-                         value=0.049, min = 0.001,
-                         step = 0.001),
-          ),
-          numericInput('alpha',
-                       'Select your alpha level',
-                       min = 0.001,
-                       max = 0.999,
-                       step = 0.001,
-                       value = 0.05)
-        ),
+                           conditionalPanel(
+                             condition = "input.dist == 'Uniform'",
+                             numericInput("uniform.min", "Min: ", value=0),
+                             numericInput("uniform.max", "Max:", value = 1, min=1)
+                           ),
 
-        # Show a plot of the generated distribution
-        mainPanel(
-            plotOutput("distPlot")
-        )
-    )
+                           conditionalPanel(
+                             condition = "input.dist == 'Exponential'",
+                             numericInput("exp.rate", "Rate: ", value=1)
+                           ),
+
+                           conditionalPanel(
+                             condition = "input.dist == 'Gamma'",
+                             numericInput("gamma_shape", "Shape:", 5, min = 1, max = 10)
+                           ),
+
+                           br(),
+
+                           # Input: Slider for the number of observations to generate ----
+                           sliderInput("n_obs",
+                                       "Number of observations:",
+                                       value = 500,
+                                       min = 100,
+                                       max = 1000),
+
+                           br(),
+
+                           actionButton("refresh", "Refresh"),
+                           helpText('Press `Refresh` button when anything about the simulated distribution changes or
+               when you what a new simulated data set.'),
+                           br(),
+
+                           br(),
+
+                           sliderInput("alpha",
+                                       "Alpha:",
+                                       value = 0.05,
+                                       min = 0.005,
+                                       max = 0.25, step = 0.005),
+
+                           br(),
+
+                           numericInput("bins",
+                                        "Number of bins:", 50, min = 10, max = 80, step = 5),
+
+                           br(),
+
+                           checkboxGroupInput("method", "Method:",
+                                              choices = c("Random Position" = "Random Position",
+                                                "Shortest" = "Shortest",
+                                                "Cross Validation" = "Cross Validation",
+                                                "Conservative" = "Conservative"),
+                                              selected = c("Cross Validation", "Conservative")),
+                           br(),
+
+                           uiOutput("k_selected"),
+
+                           br(),
+                           uiOutput("slider")
+
+                         ),
+
+                         # Main panel for displaying outputs ----
+                         mainPanel(
+                           plotOutput("plot"),
+                           fluidRow(
+                             column(3, align="center"),
+                             DT::dataTableOutput("summary")),
+                           fluidRow(
+                             column(3, align="center"),
+                             DT::dataTableOutput("table"))
+
+                         )
+                       )
+
+              ),
+              tabPanel("Comparison",
+                       sidebarLayout(
+
+                         # Sidebar panel for inputs ----
+                         sidebarPanel(
+
+                           actionButton("start", "Start Simulation"),
+                           helpText('Press `Start Simulation` button to start simulation.'),
+
+                           # Input: Slider for the number of observations to generate ----
+                           numericInput("num",
+                                       "Number of simulations:",
+                                       50,
+                                       step = 10,
+                                       min = 50,
+                                       max = 100),
+
+                           br(),
+
+                           # Input: Slider for the number of observations to generate ----
+                           sliderInput("n",
+                                       "Number of observations:",
+                                       value = 100,
+                                       min = 100,
+                                       max = 500,
+                                       step = 100),
+                           helpText('Number of observations in each simulation'),
+
+                           br(),
+
+                           h3('Distribution'),
+
+                           h4('Normal Distribution'),
+
+                           numericInput("nor_mean", "Mean: ", value=0),
+                           numericInput("nor_sd", "Standard deviation:",
+                                        value = 1, min=0.01),
+
+                           h4('Uniform Distribution'),
+
+                           numericInput("uni_min", "Min: ", value=0),
+                           numericInput("uni_max", "Max:", value = 1, min=1),
+
+                           h4('Exponential Distribution'),
+                           numericInput("exp_rate", "Rate: ", value=1),
+
+                           h4('Gamma Distribution'),
+                           numericInput("gam_shape", "Shape:", 5, min = 1, max = 10),
+
+                           h3('Method'),
+
+                           sliderInput("method.alpha",
+                                       "Alpha:",
+                                       value = 0.05,
+                                       min = 0.005,
+                                       max = 0.25,
+                                       step = 0.005),
+
+                           h4('Random Position'),
+
+                           uiOutput("Random.beta"),
+
+                           h4('Cross Validation'),
+
+                           numericInput("Cross.K", "K:", 2, min = 2, max = 10),
+
+                         ),
+
+                         # Main panel for displaying outputs ----
+                         mainPanel(
+                           plotOutput("comparison.plot")
+                         )
+                       )
+              ),
+              tabPanel("About")
+  )
 )
