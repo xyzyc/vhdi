@@ -1,9 +1,11 @@
 Package: vhdi
 Title: Prediction Interval
 Version: 1.0
-Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
+Authors@R: c(
+    person("Yingchao", "Zhou", , "yczhou@iastate.edu",role = c("aut", "cre")),
+    person("Yichuan", "Bai", ,"ycbai@iastate.edu", role = "aut"),
+    person("An", "Phan", , "ahphan@iastate.edu", role = "aut"),
+    person("Caio", "dos Santos",,"clsantos@iastate.edu", role = "aut"))
 Description: This package contains different methods to create the
     prediction interval for different data sets.
 License: GPL (>= 3)
@@ -12,9 +14,7 @@ Imports:
     magrittr,
     purrr,
     stats,
-    shiny,
-    testthat,
-    covr
+    shiny
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
@@ -22,5 +22,7 @@ LitrVersionUsed: 0.7.0
 LitrId: 55e016dd577afe7b77946af2b9124574
 Suggests: 
     knitr,
-    rmarkdown
+    rmarkdown,
+    testthat,
+    covr
 VignetteBuilder: knitr
