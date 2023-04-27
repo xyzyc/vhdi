@@ -12,7 +12,6 @@
 #'
 random.pi <- function(x, alpha, beta = NULL){
   if(is.null(beta)) beta = runif(1, 0, alpha)
-  print(beta)
   if(beta > alpha) stop("Invalid beta!")
   lower_q = lower.quantile(x, prob = beta, sorted = FALSE)
   upper_q = upper.quantile(x, prob = beta + (1 - alpha), sorted = FALSE)
