@@ -22,3 +22,16 @@ or you can use the ``devtools`` library
 
 ## Usage
 
+The three main methods to get prediction intervals are "shortest", "conservative" and "cross validation".
+
+     x <- seq(1:100, by = 0.1)
+     alpha <- 0.05
+     shortest.pi(x, alpha) # shortest
+     conservative.pi(x, alpha) # conservative
+     cv.pi(x, alpha, K = 3) # K-fold cross validation
+
+The function ``get.interval`` simulates data from specified distribution, and calculate prediction interval using the specified method.
+
+     get.interval(METHOD = "conservative", DIST = "Gamma", n = 500, alpha)
+     
+For more detailed description of methodology and functionality, see ``browseVignettes("vhdi")``.
