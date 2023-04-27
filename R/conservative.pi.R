@@ -14,6 +14,7 @@
 #'
 
 conservative.pi <- function(x, alpha){
+  stopifnot(is.numeric(x))
   n = length(x)
   k = ceiling(n*(1-alpha) + 1.12*sqrt(n*alpha))
   ordered_data = sort(x)
