@@ -1,5 +1,5 @@
 
-#' Calculate the lower quantile for data with weights
+#' Calculate the lower quantile for data
 #'
 #' @param v the data that we want to find quantile
 #' @param prob find the lower 100*prob% quantile

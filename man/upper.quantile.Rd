@@ -2,7 +2,7 @@
 % Please edit documentation in R/upper.quantile.R
 \name{upper.quantile}
 \alias{upper.quantile}
-\title{Calculate the upper quantile for data with weights}
+\title{Calculate the upper quantile for data}
 \usage{
 upper.quantile(v, prob, sorted = FALSE)
 }
@@ -14,7 +14,7 @@ upper.quantile(v, prob, sorted = FALSE)
 \item{sorted}{whether v has been sorted}
 }
 \description{
-Calculate the upper quantile for data with weights
+Calculate the upper quantile for data
 }
 \examples{
 \dontrun{

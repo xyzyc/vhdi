@@ -1,5 +1,5 @@
 
-#' Calculate the upper quantile for data with weights
+#' Calculate the upper quantile for data
 #'
 #' @param v the data that we want to find quantile
 #' @param prob find the upper 100*prob% quantile

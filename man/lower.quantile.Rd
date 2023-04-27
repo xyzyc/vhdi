@@ -2,7 +2,7 @@
 % Please edit documentation in R/lower.quantile.R
 \name{lower.quantile}
 \alias{lower.quantile}
-\title{Calculate the lower quantile for data with weights}
+\title{Calculate the lower quantile for data}
 \usage{
 lower.quantile(v, prob, sorted = FALSE)
 }
@@ -14,7 +14,7 @@ lower.quantile(v, prob, sorted = FALSE)
 \item{sorted}{whether v has been sorted}
 }
 \description{
-Calculate the lower quantile for data with weights
+Calculate the lower quantile for data
 }
 \examples{
 \dontrun{
