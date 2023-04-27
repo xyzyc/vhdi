@@ -144,7 +144,7 @@ server <- function(input, output) {
                          color = c("red", "blue", "darkgreen", "orchid3")[1:length(intervals)])
     p +
       geom_segment(aes(x = lower_q, y = y, xend = upper_q, yend = yend, color = color),
-                   size = 2, data = intervs,
+                   linewidth = 2, data = intervs,
                    arrow = arrow(length = unit(0.1, "inches"), ends = 'both')) +
       scale_color_manual(name = "Method", values = c("red", "blue", "darkgreen", "orchid3")[1:length(intervals)],
                          breaks = c("red", "blue", "darkgreen", "orchid3")[1:length(intervals)], labels = input$method)
