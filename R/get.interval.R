@@ -11,7 +11,7 @@
 #' @param n Number of observations for the simulated data
 #' @param test_n Number of observations for the test data
 #' @param alpha nominal error rate
-#' @param test_data whether generate the test data
+#' @param test_data whether generate the test data, default to FALSE
 #' @param K k-fold cross-validation. Only needed when METHOD is "Cross Validation", with default 2.
 #' @param beta a random position. Only needed when METHOD is "Random Position". beta must be less than or equal to alpha.
 #' @param shape shape parameter needed for the standard Gamma distribution, with default 5.
@@ -39,6 +39,7 @@
 get.interval <- function(METHOD = "Shortest", DIST = "Normal",
                          n = 100, test_n = 100, alpha = 0.05, test_data = F,
                          K = 2, shape = 5, beta, ...){
+  stopifnot(DIST %in% c("Normal","Uniform","Gamma","Exponential"))
   if(length(list(...)) == 0){
     if(DIST == "Normal"){
       data = rnorm(n, mean = 0, sd = 1)
@@ -52,8 +53,6 @@ get.interval <- function(METHOD = "Shortest", DIST = "Normal",
     }else if(DIST == "Gamma"){
       data = rgamma(n, shape = shape, rate = 1)
       if(test_data) reference_data = rgamma(test_n, shape = shape, rate = 1)
-    }else{
-      stop("DIST is invalid!")
     }
   }else{
     if(DIST == "Normal"){
@@ -68,8 +67,6 @@ get.interval <- function(METHOD = "Shortest", DIST = "Normal",
     }else if(DIST == "Gamma"){
       data = rgamma(n, ...)
       if(test_data) reference_data = rgamma(test_n, ...)
-    }else{
-      stop("DIST is invalid!")
     }
   }
 

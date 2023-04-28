@@ -14,6 +14,7 @@
 #' }
 #'
 cv.pi <- function(x, alpha, K = 2){
+  stopifnot(is.numeric(x))
   n = length(x)
   t.iter = seq(0, min(1.12*sqrt(alpha/n), alpha - 4/n),
                by = min(1.12*sqrt(alpha/n), alpha - 4/n)/10)

@@ -11,6 +11,7 @@
 #' }
 #'
 random.pi <- function(x, alpha, beta = NULL){
+  stopifnot(is.numeric(x))
   if(is.null(beta)) beta = runif(1, 0, alpha)
   if(beta > alpha) stop("Invalid beta!")
   lower_q = lower.quantile(x, prob = beta, sorted = FALSE)

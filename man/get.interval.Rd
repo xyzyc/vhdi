@@ -28,7 +28,7 @@ get.interval(
 
 \item{alpha}{nominal error rate}
 
-\item{test_data}{whether generate the test data}
+\item{test_data}{whether generate the test data, default to FALSE}
 
 \item{K}{k-fold cross-validation. Only needed when METHOD is "Cross Validation", with default 2.}
 

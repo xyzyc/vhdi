@@ -12,6 +12,7 @@
 #' }
 #'
 shortest.pi <- function(x, alpha){
+  stopifnot(is.numeric(x) & is.numeric(alpha))
   alpha_iter = seq(alpha/50, alpha, alpha/50)
   j <- 1
   prev_length = Inf
