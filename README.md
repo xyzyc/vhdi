@@ -35,3 +35,9 @@ The function ``get.interval`` simulates data from specified distribution, and ca
      get.interval(METHOD = "conservative", DIST = "Gamma", n = 500, alpha)
      
 For more detailed description of methodology and functionality, see ``browseVignettes("vhdi")``.
+
+## Unit test: coverage report
+
+We include unit tests for some functions implemented in the package. A coverage report is shown here:
+
+![](README_files/covr-report.png) 
