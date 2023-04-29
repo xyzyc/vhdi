@@ -7,19 +7,13 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r, include = FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>"
-)
-```
-
-```{r, include=FALSE}
-# devtools::install()
-```
 
 
-```{r setup}
+
+
+
+
+```r
 library(vhdi)
 ```
 ## vhdi
@@ -47,27 +41,33 @@ If $r$(or $\beta$) is pre-specified or chosen at random, the above prediction in
 
 The function searching for the shortest interval is `shortest.pi`, which takes a data vector `x` and nominal error rate `alpha` as input, searches along a sequence of $\beta = \{k*\alpha/50\}_{k=1}^{50}$, and returns the shortest interval $(X_{(r)}, X_{(r+k)})$, where $r = \lfloor (n+1)\beta\rfloor$ and $r+k = \lceil (n+1)(1-\alpha+\beta)\rceil$.
 
-```{r}
+
+```r
 set.seed(100723)
 ## simulate data from normal distribution as an example
 x <- rnorm(1000)
 alpha <- 0.05
 shortest.pi(x, alpha)
+#> [1] -1.893637  2.092619
 ```
 
 Function `random.pi` illustrate the effect of picking $\beta$ value at random from $(0, \alpha)$, or you may specify `beta` as the probability on the left tail.
 
 `random.pi` may take an additional parameter `beta`. If `beta` is unspecified, its value will be chosen uniformly at random from $(0, \alpha)$; otherwise the specified `beta` will be used by the function. You may provide a random `beta` generated from another distribution other than Uniform. It is always safer to specify `beta` as you will know its value.
 
-```{r}
+
+```r
 ## random positioning
 random.pi(x, alpha)
+#> [1] -1.939332  2.070077
 
 ## specify equal tailed positioning
 random.pi(x, alpha, beta = alpha/2)
+#> [1] -1.939332  2.063982
 
 ## specify any positioning
 random.pi(x, alpha, alpha/10)
+#> [1] -2.881872  1.810862
 ```
 
 
@@ -82,8 +82,10 @@ $$\text{inf}_{F\in\mathcal{F}}P(L(\mathbf{X})<X_{n+1}<U(\mathbf{X}))\geq 1-\alph
 
 where $\mathcal{F}$ is the set of distributions under consideration. Oftentimes, the interval obtained through this method is wider than necessary.
 
-```{r}
+
+```r
 conservative.pi(x, alpha)
+#> [1] -2.049211  2.070077
 ```
 
 ### Prediction interval using cross validation
@@ -94,8 +96,10 @@ In k-fold cross-validation, the original sample is randomly partitioned into $k$
 
 The function `cv.pi` calculated the corrected shortest prediction interval based on $K$ fold cross validation. The default value for `K` is 2 to reduce calculation time.  
 
-```{r}
+
+```r
 cv.pi(x, alpha, K = 5)
+#> [1] -1.893637  2.092619
 ```
 
 ### Other functions
@@ -104,7 +108,8 @@ cv.pi(x, alpha, K = 5)
 
 The function `get.interval` let user get the prediction interval based on a simulated data set. It supports four methods to get prediction intervals: shortest with no correction, conservative and cross-validation method, as well as picking a random $\beta$ value. Four types of distributions are possible to be  specified for this function: normal, uniform, exponential and gamma. 
 
-```{r, fig.width=6, fig.height=4}
+
+```r
 # more details in ?get.interval
 # Example: generate the samples from standard normal distribution
 # use cross validation method to get the prediction interval using the generated sample
@@ -122,6 +127,8 @@ cuts = cut(h$breaks, c(lower_q, upper_q))
 plot(h$breaks, c(h$counts,0) ,type="s",col="black", lwd=2)
 plot(h, col="gray"[cuts], lty="blank", add=T)
 ```
+
+![plot of chunk unnamed-chunk-7](figure/unnamed-chunk-7-1.png)
 
 - quantile calculation
 
@@ -151,7 +158,8 @@ As Frey(2013) mentioned, uniform distribution is the worst case scenario for the
 The conservative prediction interval proposed by Frey(2013) guarantees valid coverage for uniform distribution, thus all the distributions.
 
 
-```{r, fig.width=8, fig.height=6}
+
+```r
 
 n <- 1000 ## training sample size
 n0 <- 1000 ## test sample size
@@ -193,19 +201,34 @@ for(i in 1:n_exp){
   cov.box[i,4] = coverage.x0
   len.box[i,4] = mean(cons_upper_q - cons_lower_q)
 }
+#> Warning in random.pi(x, alpha, beta): No finite interval at coverage given rate and random position.
+
+#> Warning in random.pi(x, alpha, beta): No finite interval at coverage given rate and random position.
+
+#> Warning in random.pi(x, alpha, beta): No finite interval at coverage given rate and random position.
 
 boxplot(cov.box, main = paste("Coverage", expression(alpha), '=', alpha, 'Uniform'), names = c("shortest", "random", "cross validation", "conservative"))
 abline(h = 1-alpha, col = 'red')
+```
+
+![plot of chunk unnamed-chunk-8](figure/unnamed-chunk-8-1.png)
+
+```r
 
 boxplot(len.box, main = paste("Length", expression(alpha), '=', alpha, 'Uniform'), names = c("shortest", "random", "cross validation", "conservative"))
+#> Warning in bplt(at[i], wid = width[i], stats = z$stats[, i], out = z$out[z$group == : Outlier (Inf) in
+#> boxplot 2 is not drawn
 ```
+
+![plot of chunk unnamed-chunk-8](figure/unnamed-chunk-8-2.png)
 
 #### Normal distribution
 
 When data is not skewed, naive shortest prediction interval may under cover; the conservative method may give too wide an interval when data is not uniform.
 
 
-```{r, fig.width=8, fig.height=6}
+
+```r
 n <- 1000 ## training sample size
 n0 <- 1000 ## test sample size
 alpha <- 0.05 ## nominal error rate
@@ -246,19 +269,38 @@ for(i in 1:n_exp){
   cov.box[i,4] = coverage.x0
   len.box[i,4] = mean(cons_upper_q - cons_lower_q)
 }
+#> Warning in random.pi(x, alpha, beta): No finite interval at coverage given rate and random position.
+
+#> Warning in random.pi(x, alpha, beta): No finite interval at coverage given rate and random position.
+
+#> Warning in random.pi(x, alpha, beta): No finite interval at coverage given rate and random position.
+
+#> Warning in random.pi(x, alpha, beta): No finite interval at coverage given rate and random position.
+
+#> Warning in random.pi(x, alpha, beta): No finite interval at coverage given rate and random position.
 
 boxplot(cov.box, main = paste("Coverage", expression(alpha), '=', alpha, 'Normal'), names = c("shortest", "random", "cross validation", "conservative"))
 abline(h = 1-alpha, col = 'red')
+```
+
+![plot of chunk unnamed-chunk-9](figure/unnamed-chunk-9-1.png)
+
+```r
 
 boxplot(len.box, main = paste("Length", expression(alpha), '=', alpha, 'Normal'), names = c("shortest", "random", "cross validation", "conservative"))
+#> Warning in bplt(at[i], wid = width[i], stats = z$stats[, i], out = z$out[z$group == : Outlier (Inf) in
+#> boxplot 2 is not drawn
 ```
+
+![plot of chunk unnamed-chunk-9](figure/unnamed-chunk-9-2.png)
 
 
 #### Log normal distribution
 
 When the data is indeed skewed, native shortest interval searching dose not suffer as severe an under-coverage problem. 
 
-```{r, fig.width=8, fig.height=6}
+
+```r
 n <- 1000 ## training sample size
 n0 <- 1000 ## test sample size
 alpha <- 0.05 ## nominal error rate
@@ -299,12 +341,26 @@ for(i in 1:n_exp){
   cov.box[i,4] = coverage.x0
   len.box[i,4] = mean(cons_upper_q - cons_lower_q)
 }
+#> Warning in random.pi(x, alpha, beta): No finite interval at coverage given rate and random position.
+
+#> Warning in random.pi(x, alpha, beta): No finite interval at coverage given rate and random position.
+
+#> Warning in random.pi(x, alpha, beta): No finite interval at coverage given rate and random position.
 
 boxplot(cov.box, main = paste("Coverage", expression(alpha), '=', alpha, 'Log normal'), names = c("shortest", "random", "cross validation", "conservative"))
 abline(h = 1-alpha, col = 'red')
+```
+
+![plot of chunk unnamed-chunk-10](figure/unnamed-chunk-10-1.png)
+
+```r
 
 boxplot(len.box, main = paste("Length", expression(alpha), '=', alpha, 'Log normal'), names = c("shortest", "random", "cross validation", "conservative"))
+#> Warning in bplt(at[i], wid = width[i], stats = z$stats[, i], out = z$out[z$group == : Outlier (Inf) in
+#> boxplot 2 is not drawn
 ```
+
+![plot of chunk unnamed-chunk-10](figure/unnamed-chunk-10-2.png)
 
 ## Future work
 
