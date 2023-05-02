@@ -314,8 +314,4 @@ A natural question is whether we can find the appropriate correction for each di
 
 The cross validation method works fairly well for different distributions, but the theoretical aspect of this method is not shown yet.
 
-## Unit test: coverage report
 
-We include unit tests for some functions implemented in the package. A coverage report is shown here:
-
-![](README_files/covr-report.png) 

@@ -40,4 +40,4 @@ For more detailed description of methodology and functionality, see ``browseVign
 
 We include unit tests for some functions implemented in the package. A coverage report is shown here:
 
-![](README_files/covr-report.png) 
+![](man/figures/covr-report.png) 
