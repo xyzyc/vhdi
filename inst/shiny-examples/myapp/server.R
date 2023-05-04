@@ -126,7 +126,24 @@ server <- function(input, output) {
     return(intervs)
   })
 
+  output$warning <- renderText({
+    if(is.null(intervals())) return(NULL)
+    intervals = intervals()
+    lower_q = sapply(intervals, function(x) {x$interval[1]})
+    upper_q = sapply(intervals, function(x) {x$interval[2]})
+    if (any(lower_q == -Inf) | any(upper_q == Inf)){
+      meth = input$method[which(lower_q == -Inf)]
 
+      sprintf("Warning: No finite interval at coverage given rate and random position when using %s method.", meth)
+    }else if(any(upper_q == Inf)){
+      meth = input$method[which(upper_q == -Inf)]
+
+      sprintf("Warning: No finite interval at coverage given rate and random position when using %s method.", meth)
+    }else{
+      NULL
+    }
+
+  })
 
   output$plot <- renderPlot({
     if(is.null(intervals())) return(NULL)
@@ -311,6 +328,144 @@ server <- function(input, output) {
   output$comparison.plot <- renderPlot({
     plot_tbl()$p
   }, height = 600)
+
+  ##########real data tab
+
+  output$real.k_selected <- renderUI({
+    if ('Cross Validation' %in% input$real.method) {
+      numericInput("real.k_selected", "K", 2, min = 2, max = 10)
+    }
+  })
+
+
+  output$real.slider <- renderUI({
+    if ('Random Position' %in% input$real.method) {
+      sliderInput("real.beta", "Beta", value = 0.02, min = 0.01,  max = min(input$alpha, 0.25), step = 0.01)
+    }
+  })
+
+  real.paras = reactive({
+    if(is.null(input$real.k_selected) && is.null(input$real.beta)) return(NULL)
+    if(is.null(input$real.k_selected)) {
+      return(list('beta' = input$real.beta))
+    }else if(is.null(input$real.beta)) {
+      return(list('k' = input$real.k_selected))
+    }else{
+      list('beta' = input$real.beta, 'k' = input$real.k_selected)
+    }
+  })
+
+
+  real.intervals = reactive({
+    data = myData()
+    method = input$real.method
+    paras = real.paras()
+    if(is.null(real.paras)) return(NULL)
+    if('Random Position' %in% input$real.method && is.null(input$real.beta)) return(NULL)
+    if('Cross Validation' %in% input$real.method && is.null(input$real.k_selected)) return(NULL)
+    intervs = lapply(method, function(x) get.interval.with.data(data, METHOD = x, alpha = input$real.alpha,
+                                                                K = as.numeric(paras$k), beta = as.numeric(paras$beta)))
+    names(intervs) = method
+    return(intervs)
+  })
+
+  myData = reactive({
+    req(input$file)
+    data = read.csv(input$file$datapath, header = F)
+    data = unlist(as.vector(data))
+    return(data)
+  })
+
+  output$real.warning <- renderText({
+    if(is.null(real.intervals())) return(NULL)
+    intervals = real.intervals()
+    lower_q = sapply(intervals, function(x) {x$interval[1]})
+    upper_q = sapply(intervals, function(x) {x$interval[2]})
+    if (any(lower_q == -Inf) | any(upper_q == Inf)){
+      meth = input$real.method[which(lower_q == -Inf)]
+
+      sprintf("Warning: No finite interval at coverage given rate and random position when using %s method.", meth)
+    }else if(any(upper_q == Inf)){
+      meth = input$real.method[which(upper_q == -Inf)]
+
+      sprintf("Warning: No finite interval at coverage given rate and random position when using %s method.", meth)
+    }else{
+      NULL
+    }
+
+  })
+
+  output$real.plot <- renderPlot({
+    if(is.null(real.intervals())) return(NULL)
+    intervals = real.intervals()
+    lower_q = sapply(intervals, function(x) {x$interval[1]})
+    upper_q = sapply(intervals, function(x) {x$interval[2]})
+    data = data.frame(value = myData())
+
+    p = ggplot(data, aes(x=value)) +
+      geom_histogram(bins=input$real.bins,fill="white", colour="black")
+    ggp_build = ggplot_build(p)
+    limits = max(ggp_build[["data"]][[1]][["count"]])
+    y = seq(0, limits, length.out = 25)[2:(length(intervals)+1)]
+    intervs = data.frame(lower_q, upper_q, y = y, yend = y,
+                         color = c("red", "blue", "darkgreen", "orchid3")[1:length(intervals)])
+    p +
+      geom_segment(aes(x = lower_q, y = y, xend = upper_q, yend = yend, color = color),
+                   linewidth = 2, data = intervs,
+                   arrow = arrow(length = unit(0.1, "inches"), ends = 'both')) +
+      scale_color_manual(name = "Method", values = c("red", "blue", "darkgreen", "orchid3")[1:length(intervals)],
+                         breaks = c("red", "blue", "darkgreen", "orchid3")[1:length(intervals)], labels = input$real.method)
+  })
+
+
+
+  # Generate an HTML table view of the data ----
+  output$real.summary <- renderDT({
+    data = myData()
+    if(is.null(real.intervals())) return(NULL)
+
+    df = data.frame(t(as.vector(summary(data))))
+    names(df) = c('Min.',  '1st Qu.',   'Median',     'Mean',  '3rd Qu.',     'Max.')
+    df = df %>%
+      mutate(across(where(is.numeric), \(x) round(x, digits = 2)))
+    as.data.frame(df) %>%
+      datatable(
+        caption = 'Data Summary',
+        rownames = FALSE,
+        options = list(
+          dom = 't',
+          autoWidth = FALSE,
+          columnDefs = list(
+            list(width = '50px', targets = "_all"),
+            list(className = 'dt-center', targets = "_all"))
+        )
+      )
+  })
+
+  output$real.table <- renderDT({
+    if(is.null(real.intervals())) return(NULL)
+    intervals = real.intervals()
+    lower_q = sapply(intervals, function(x) {x$interval[1]})
+    upper_q = sapply(intervals, function(x) {x$interval[2]})
+    df = data.frame(input$real.method, lower_q, upper_q, upper_q - lower_q)
+    names(df) = c('Method', 'Lower Bound', 'Upper Bound', 'Inteval Length')
+    df = df %>%
+      mutate(across(where(is.numeric), \(x) round(x, digits = 2)))
+    as.data.frame(df) %>%
+      datatable(
+        caption = 'Interval Information',
+        rownames = FALSE,
+        options = list(
+          dom = 't',
+          autoWidth = FALSE,
+          columnDefs = list(
+            list(width = '50px', targets = "_all"),
+            list(className = 'dt-center', targets = "_all"))
+        )
+      )
+  })
+
+
 
 
 }

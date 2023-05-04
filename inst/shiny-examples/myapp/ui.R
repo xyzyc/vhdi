@@ -94,6 +94,7 @@ ui <- fluidPage(
                          # Main panel for displaying outputs ----
                          mainPanel(
                            plotOutput("plot"),
+                           textOutput("warning"),
                            fluidRow(
                              column(3, align="center"),
                              DT::dataTableOutput("summary")),
@@ -179,6 +180,63 @@ ui <- fluidPage(
                          )
                        )
               ),
+              tabPanel("Upload your data",
+                       sidebarLayout(
+
+                         # Sidebar panel for inputs ----
+                         sidebarPanel(
+
+                           # Input: Select a file ----
+                           fileInput("file", "Choose CSV File",
+                                     accept = c("text/csv",
+                                                "text/comma-separated-values,text/plain",
+                                                ".csv")),
+
+                           br(),
+
+                           sliderInput("real.alpha",
+                                       "Alpha:",
+                                       value = 0.1,
+                                       min = 0.05,
+                                       max = 0.25, step = 0.01),
+
+                           br(),
+
+                           numericInput("real.bins",
+                                        "Number of bins:", 50, min = 10, max = 80, step = 5),
+
+                           br(),
+
+                           checkboxGroupInput("real.method", "Method:",
+                                              choices = c("Random Position" = "Random Position",
+                                                          "Shortest" = "Shortest",
+                                                          "Cross Validation" = "Cross Validation",
+                                                          "Conservative" = "Conservative"),
+                                              selected = c("Random Position", "Cross Validation", "Conservative")),
+                           br(),
+
+                           uiOutput("real.k_selected"),
+
+                           br(),
+                           uiOutput("real.slider")
+
+                         ),
+
+                         # Main panel for displaying outputs ----
+                         mainPanel(
+                           plotOutput("real.plot"),
+                           textOutput("real.warning"),
+                           fluidRow(
+                             column(3, align="center"),
+                             DT::dataTableOutput("real.summary")),
+                           fluidRow(
+                             column(3, align="center"),
+                             DT::dataTableOutput("real.table"))
+
+                         )
+                       )
+
+              ),
               tabPanel("About",
                        fluidRow(
                          column(5,
@@ -219,7 +277,9 @@ ui <- fluidPage(
                                      this process requires intensive computing and can be time consuming, a progressbar in the bottom-right corner of the
                                      user interface will show how many simulation have been performed. It is important to note that
                                      as the numbers of simulations and observations increase, this process takes longer to be executed.')),
-
+                                h4(p('Upload your data')),
+                                h5(p('User can upload data set to get the prediction intervals using different methods. The uploaded file must be a csv file with data in a column.
+                                     No header should be included in the file.'))
 
 
                                 )
