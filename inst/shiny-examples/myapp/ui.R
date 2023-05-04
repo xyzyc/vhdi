@@ -212,7 +212,7 @@ ui <- fluidPage(
                                                           "Shortest" = "Shortest",
                                                           "Cross Validation" = "Cross Validation",
                                                           "Conservative" = "Conservative"),
-                                              selected = c("Random Position", "Cross Validation", "Conservative")),
+                                              selected = c("Cross Validation", "Conservative")),
                            br(),
 
                            uiOutput("real.k_selected"),
